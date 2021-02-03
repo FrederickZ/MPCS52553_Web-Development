@@ -1,11 +1,11 @@
-create table posts (
+create table if not exists posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   slug VARCHAR(30) NOT NULL,
   title VARCHAR(255) NOT NULL,
   body TEXT
 );
 
-create table comments (
+create table if not exists comments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT,
   body TEXT,
