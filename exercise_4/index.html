@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="stylesheet.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <script src="script.js"></script>
+    <title>Mood Board</title>
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <a href="">MoodBoard</a>
+        </div>
+        <div id="search-container">
+            <button onclick="bingImageSearch()"><i class="material-icons">search</i></input></button>
+            <input type="text" id="query" placeholder="How are you today?">
+        </div>
+    </nav>
+    
+    <div class="board" id="favorite-board">
+        <h2>My Favorites</h2>
+        <div class="multicol-container" id="favorites-container"></div>
+    </div>
+    
+    <div class="board" id="result-board">
+        <h2>Search Result</h2>
+        <div id="result-container">
+            <div class="multicol-container" id="result-images-container">
+                
+            </div>
+            <div class="container" id="actions-container">
+                <ul class="tags" id="related-searches-container"></ul>
+            </div>
+        </div>
+    </div>
+    
+    
+</body>
+</html>
