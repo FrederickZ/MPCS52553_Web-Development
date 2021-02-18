@@ -1,17 +1,22 @@
 <html>
 <head>
   <title>Watch Party</title>
-  <link rel="stylesheet" type="text/css" href="static/style.css"></link>
-  <script src="static/script.js"></script>
+  <link rel="stylesheet" type="text/css" href="/static/style.css"></link>
+  <script src="/static/script.js"></script>
 </head>
 <body>
+  <nav></nav>
+  <div class="container">
+    <div class="hero">
+      <h1>Watch Party</h1>
+      <h3>Enter a username</h3>
+      <input id="username"></input>
+      <h3>and</h3>
+      <button id="auth" onclick="authenticate()">join magic party</button>
+      <div id="username-error"></div>
+    </div>
+  </div>
 <div class="container">
-
-<div class="auth">
-  <h3>Enter a username!</h3>
-  <input id="username"></input>
-  <button onclick="authenticate()" value="Join Chat"></button>
-</div>
 
 </div>
 

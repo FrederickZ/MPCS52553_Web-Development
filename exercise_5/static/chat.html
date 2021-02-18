@@ -1,30 +1,23 @@
 <html>
 <head>
   <title>Watch Party</title>
-  <link rel="stylesheet" type="text/css" href="static/style.css"></link>
-  <script src="static/script.js"></script>
+  <link rel="stylesheet" type="text/css" href="/static/style.css"></link>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <script src="/static/script.js"></script>
 </head>
 <body>
-
-<div class="container">
-
-<div class="chat">
-  <div class="messages">
-    Chats chats chats
+  <nav>
+    <ul id="user-chats"><script>getUserChats()</script></ul>
+    <button id="copy-link" onclick="getMagicLink()"><i class="material-icons">link</i></button>
+  </nav>
+  <div class="container">
+    <div id="messages-box"><script>startMessagePolling()</script></div>
   </div>
-  <div class="comment_box">
-    <form>
-      <input name="comment" />
-      <input type="submit" value="Post" />
-    </form>
+  <div class="chat-box">
+    <input id="chat"></input>
+    <button id="send" onclick="postMessage()">send</button>
   </div>
-</div>
-
-</div>
-
-<script>
-startMessagePolling();
-</script>
+  
 
 </body>
 </html>
