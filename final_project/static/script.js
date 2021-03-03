@@ -3,6 +3,10 @@ const homeColumn = document.getElementById('home');
 const chatColumn = document.getElementById('chat')
 const threadsColumn = document.getElementById('threads');
 
+/* ------------------------------------------------------------
+                            Nav                                
+------------------------------------------------------------ */
+
 function BackHome(props) {
     return (
         <button onClick={props.onBackHome}>
@@ -25,6 +29,36 @@ class Nav extends React.Component {
     }
 }
 
+
+
+/* ------------------------------------------------------------
+                        Register                                
+------------------------------------------------------------ */
+
+function Register(props) {
+    let username = props.username;
+    if (username) {
+        return (
+            <p>Hi, {username}!</p>
+        )
+    } else {
+        return (
+            <button>Register</button>
+        )
+    }
+    
+}
+
+// class RegisterBox extends React.Component {
+
+// }
+
+
+
+/* ------------------------------------------------------------
+                           Chat                                
+------------------------------------------------------------ */
+
 class Chat extends React.Component {
     render() {
         return (
@@ -41,6 +75,12 @@ class Chat extends React.Component {
 
 }
 
+
+
+/* ------------------------------------------------------------
+                           Home                                
+------------------------------------------------------------ */
+
 class Home extends React.Component {
     render() {
         return (
@@ -55,18 +95,34 @@ class Home extends React.Component {
 
 }
 
+
+
+/* ------------------------------------------------------------
+                        Controller                                
+------------------------------------------------------------ */
+
 class Panel extends React.Component {
     constructor(props) {
         super(props)
     }
     
+    
 
     render() {
-        const isChat = this.props.isChat;
-        if (isChat) {
-            return <Chat />;
+        let panel;
+        if (this.props.isChat) {
+            panel = <Chat />;
+        } else {
+            panel = <Home />;
         }
-        return <Home />;
+        return (
+            <div id="panel">
+                <Register
+                    username={this.props.username}
+                />
+                {panel}
+            </div>
+        )
     }
 
     
@@ -76,9 +132,11 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            username: 'FrederickZ',
             isChat: true,
         }
     }
+
     render() {
         return (
             <div id="app">
@@ -87,11 +145,11 @@ class App extends React.Component {
                         onShowHome={() => this.showHome()}
                     />
                 </div>
-                <div id="panel">
-                    <Panel 
-                        isChat={this.state.isChat}
-                    />
-                </div>
+                <Panel 
+                    isChat={this.state.isChat}
+                    username={this.state.username}
+                />
+                
             </div>
         )
     }
@@ -100,8 +158,6 @@ class App extends React.Component {
             isChat: false,
         })
     }
-
-
 }
 
 
