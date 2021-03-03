@@ -13,17 +13,18 @@ class Register extends React.Component {
     }
 
     render() {
+        if (document.getElementById("register")) {
+            showLogin()
+        }
+
         return (
             <div id="register">
-                <div id="register-nav">
-                    <button id="signin-button">Sign in</button>
-                    <button id="signup-button">Sign up</button>
-                    <button 
-                        id="close-register" 
-                        onClick={() => { document.getElementById("register").style.display="none" }}
-                    >&times;</button>
-                </div>
-                <div id="signin">
+                <button 
+                    id="close-register" 
+                    onClick={() => { document.getElementById("register").style.display="none" }}
+                >&times;</button>
+                <div id="login" style={{display:"block"}}>
+                    <h3>LOG IN</h3>
                     <form>
                         <label>
                             Email:
@@ -33,10 +34,15 @@ class Register extends React.Component {
                             Password:
                             <input type="text" name="password" /><br/>
                         </label>
-                        <input type="submit" value="Sign in" />
+                        <input type="submit" value="Log in" />
                     </form>
+                    <small>
+                        Don't have an account? 
+                        <button onClick={showSignup}>SIGN UP</button>
+                    </small>
                 </div>
-                <div id="signup">
+                <div id="signup" style={{display:"none"}}>
+                    <h3>CREATE AN ACCOUNT</h3>
                     <form>
                         <label>
                             Email:
@@ -52,10 +58,26 @@ class Register extends React.Component {
                         </label>
                         <input type="submit" value="Sign up" />
                     </form>
+                    <small>
+                        Already have an account? 
+                        <button onClick={showLogin}>LOG IN</button>
+                    </small>
                 </div>
             </div>
         )
+
+        function showLogin() {
+            document.getElementById("login").style.display="block";
+            document.getElementById("signup").style.display="none";
+        }
+
+        function showSignup() {
+            document.getElementById("signup").style.display="block";
+            document.getElementById("login").style.display="none";
+        }
     }
+
+    
 }
 
 

@@ -7,3 +7,9 @@ html {
     position: fixed;
     z-index: 1;
 }
+#login {
+    display: "block";
+}
+#signup {
+    display: none;
+}
