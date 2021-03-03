@@ -105,9 +105,18 @@ class Nav extends React.Component {
             <div>
                 <BackHome onBackHome={this.props.onShowHome}/>
                 <p>channels nav</p>
-                { username && <p><button><i className="material-icons">settings</i></button>Hi, {username}</p> }
+                { username ? 
+                    <p><button><i className="material-icons">settings</i></button>Hi, {username}</p> : 
+                    <button onClick={showRegister}>Register</button>
+                }
             </div>
         )
+
+        function showRegister() {
+            document.getElementById("register").style.display = "block";
+            document.getElementById("login").style.display = "block";
+            document.getElementById("signup").style.display = "none";
+        }
     }
 }
 
@@ -193,7 +202,7 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: null,
+            username: 'F',
             isChat: true,
         }
     }
