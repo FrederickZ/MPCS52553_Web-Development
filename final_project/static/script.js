@@ -21,73 +21,81 @@ class Register extends React.Component {
     
     render() {
         return (
-            <div id="register">
-                <button 
-                    id="close-register" 
-                    onClick={() => { document.getElementById("register").style.display="none" }}
-                >&times;</button>
-                <div id="login" style={{display:"block"}}>
-                    <h3>LOG IN</h3>
-                    <form name="login-form" className="register-form" onSubmit={this.handleLogin}>
-                        <input 
-                            type="text" name="email" placeholder="Email" 
-                            onChange={this.handleChange}
-                        />
-                        <span className="error">{this.state.errors.email}</span><br/>
-                        <input 
-                            type="password" name="password" placeholder="Password" 
-                            onChange={this.handleChange}
-                        />
-                        <span className="error">{this.state.errors.password}</span><br/>
-                        <input type="submit" value="Log in" />
-                    </form>
-                    <small>
-                        Don't have an account? 
-                        <button onClick={() => this.switchRegister()}>SIGN UP</button>
-                    </small>
-                </div>
-                <div id="signup" style={{display:"none"}}>
-                    <h3>CREATE AN ACCOUNT</h3>
-                    <form name="signup-form" className="register-form" onSubmit={this.handleSignup}>
-                        <input 
-                            type="text" name="email" placeholder="Email" 
-                            onChange={this.handleChange}
-                        />
-                        <span className="error">{this.state.errors.email}</span><br/>
-                        <input 
-                            type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
-                            onChange={this.handleChange}    
-                        />
-                        <span className="error">{this.state.errors.username}</span><br/>
-                        <input 
-                            type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
-                            onChange={this.handleChange}
-                        />
-                        <span className="error">{this.state.errors.password}</span><br/>
-                        <input type="submit" value="Sign up"/>
-                    </form>
-                    <small>
-                        Already have an account? 
-                        <button onClick={() => this.switchRegister()}>LOG IN</button>
-                    </small>
+            <div id="register" className="popup">
+                <div id="register-box" className="popup-box">
+                    <button 
+                        id="close-register" 
+                        onClick={() => { 
+                            document.getElementById("register").style.display="none";
+                            this.resetRegister();
+                        }}
+                    >&times;</button>
+                    <div id="login" style={{display: (this.state.isLogin ? "block" : "none")}}>
+                        <h3>LOG IN</h3>
+                        <form id="login-form" name="login-form" className="register-form" onSubmit={this.handleLogin}>
+                            <input 
+                                type="text" name="email" placeholder="Email" 
+                                onChange={this.handleChange}
+                            />
+                            <span className="error">{this.state.errors.email}</span><br/>
+                            <input 
+                                type="password" name="password" placeholder="Password" 
+                                onChange={this.handleChange}
+                            />
+                            <span className="error">{this.state.errors.password}</span><br/>
+                            <input type="submit" value="Log in" />
+                        </form>
+                        <small>
+                            Don't have an account? 
+                            <button onClick={() => this.switchRegister()}>SIGN UP</button>
+                        </small>
+                    </div>
+                    <div id="signup" style={{display: (this.state.isLogin ? "none" : "block")}}>
+                        <h3>CREATE AN ACCOUNT</h3>
+                        <form id="signup-form" name="signup-form" className="register-form" onSubmit={this.handleSignup}>
+                            <input 
+                                type="text" name="email" placeholder="Email" 
+                                onChange={this.handleChange}
+                            />
+                            <span className="error">{this.state.errors.email}</span><br/>
+                            <input 
+                                type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
+                                onChange={this.handleChange}    
+                            />
+                            <span className="error">{this.state.errors.username}</span><br/>
+                            <input 
+                                type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
+                                onChange={this.handleChange}
+                            />
+                            <span className="error">{this.state.errors.password}</span><br/>
+                            <input type="submit" value="Sign up"/>
+                        </form>
+                        <small>
+                            Already have an account? 
+                            <button onClick={() => this.switchRegister()}>LOG IN</button>
+                        </small>
+                    </div>
                 </div>
             </div>
+
+            
         )        
     }
 
-    switchRegister() {
-        if (this.state.isLogin) {
-            document.getElementById('signup').style.display = 'block';
-            document.getElementById('login').style.display = 'none';
-        } else {
-            document.getElementById('login').style.display = 'block';
-            document.getElementById('signup').style.display = 'none';
-        }
+    resetRegister() {
+        document.getElementById("login-form").reset();
+        document.getElementById("signup-form").reset();
         this.setState({
-            isLogin: !this.state.isLogin,
             fields: {},
             errors: {},
         })
+    }
+
+    switchRegister() {
+        this.setState({
+            isLogin: !this.state.isLogin,
+        })
+        this.resetRegister();
     }
 
     handleChange(event) {
@@ -135,6 +143,9 @@ class Register extends React.Component {
             this.setState({errors: {}});
             return true;
         }
+    }
+
+    handleSubmit() {
         
     }
 }
@@ -151,6 +162,10 @@ function BackHome(props) {
             <i className="material-icons">add</i>
         </button>
     )
+}
+
+class UserChannel extends React.Component {
+
 }
 
 class Nav extends React.Component {
@@ -213,6 +228,17 @@ class Chat extends React.Component {
                            Home                                
 ------------------------------------------------------------ */
 
+class Channel extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (<div></div>)
+    }
+}
+
+
 class Home extends React.Component {
     constructor(props) {
         super(props)
@@ -257,7 +283,7 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: null,
+            username: 'F',
             isChat: true,
         }
     }
@@ -265,17 +291,19 @@ class App extends React.Component {
     render() {
         return (
             <div id="app">
-                <div id="nav">
-                    <Nav
-                        username={this.state.username}
-                        onShowHome={() => this.showHome()}
-                    />
-                </div>
-                <div id="panel">
-                    <Panel 
-                        isChat={this.state.isChat}
-                        username={this.state.username}
-                    />
+                <div id="main">
+                    <div id="nav">
+                        <Nav
+                            username={this.state.username}
+                            onShowHome={() => this.showHome()}
+                        />
+                    </div>
+                    <div id="panel">
+                        <Panel 
+                            isChat={this.state.isChat}
+                            username={this.state.username}
+                        />
+                    </div>
                 </div>
                 {!this.state.username && <Register registerType="login"/>}
             </div>
