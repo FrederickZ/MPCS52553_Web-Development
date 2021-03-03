@@ -4,6 +4,63 @@ const chatColumn = document.getElementById('chat')
 const threadsColumn = document.getElementById('threads');
 
 /* ------------------------------------------------------------
+                        Register                                
+------------------------------------------------------------ */
+
+class Register extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div id="register">
+                <div id="register-nav">
+                    <button id="signin-button">Sign in</button>
+                    <button id="signup-button">Sign up</button>
+                    <button 
+                        id="close-register" 
+                        onClick={() => { document.getElementById("register").style.display="none" }}
+                    >&times;</button>
+                </div>
+                <div id="signin">
+                    <form>
+                        <label>
+                            Email:
+                            <input type="text" name="email" /><br/>
+                        </label>
+                        <label>
+                            Password:
+                            <input type="text" name="password" /><br/>
+                        </label>
+                        <input type="submit" value="Sign in" />
+                    </form>
+                </div>
+                <div id="signup">
+                    <form>
+                        <label>
+                            Email:
+                            <input type="text" name="email" /><br/>
+                        </label>
+                        <label>
+                            Username:
+                            <input type="text" name="username" /><br/>
+                        </label>
+                        <label>
+                            Password:
+                            <input type="text" name="password" /><br/>
+                        </label>
+                        <input type="submit" value="Sign up" />
+                    </form>
+                </div>
+            </div>
+        )
+    }
+}
+
+
+
+/* ------------------------------------------------------------
                             Nav                                
 ------------------------------------------------------------ */
 
@@ -16,14 +73,17 @@ function BackHome(props) {
 }
 
 class Nav extends React.Component {
-    constructor(props){
+    constructor(props) {
         super(props);
     }
+
     render() {
+        let username = this.props.username; 
         return (
             <div>
                 <BackHome onBackHome={this.props.onShowHome}/>
                 <p>channels nav</p>
+                { username && <p><button><i className="material-icons">settings</i></button>Hi, {username}</p> }
             </div>
         )
     }
@@ -31,27 +91,7 @@ class Nav extends React.Component {
 
 
 
-/* ------------------------------------------------------------
-                        Register                                
------------------------------------------------------------- */
 
-function Register(props) {
-    let username = props.username;
-    if (username) {
-        return (
-            <p>Hi, {username}!</p>
-        )
-    } else {
-        return (
-            <button>Register</button>
-        )
-    }
-    
-}
-
-// class RegisterBox extends React.Component {
-
-// }
 
 
 
@@ -60,6 +100,10 @@ function Register(props) {
 ------------------------------------------------------------ */
 
 class Chat extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+
     render() {
         return (
             <div id="chat">
@@ -82,6 +126,10 @@ class Chat extends React.Component {
 ------------------------------------------------------------ */
 
 class Home extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+
     render() {
         return (
             <div id="home">
@@ -109,20 +157,11 @@ class Panel extends React.Component {
     
 
     render() {
-        let panel;
         if (this.props.isChat) {
-            panel = <Chat />;
+            return <Chat username={this.props.username}/>
         } else {
-            panel = <Home />;
+            return <Home />
         }
-        return (
-            <div id="panel">
-                <Register
-                    username={this.props.username}
-                />
-                {panel}
-            </div>
-        )
     }
 
     
@@ -132,7 +171,7 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: 'FrederickZ',
+            username: null,
             isChat: true,
         }
     }
@@ -141,19 +180,25 @@ class App extends React.Component {
         return (
             <div id="app">
                 <div id="nav">
-                    <Nav 
+                    <Nav
+                        username={this.state.username}
                         onShowHome={() => this.showHome()}
                     />
                 </div>
-                <Panel 
-                    isChat={this.state.isChat}
-                    username={this.state.username}
-                />
-                
+                <div id="panel">
+                    <Panel 
+                        isChat={this.state.isChat}
+                        username={this.state.username}
+                    />
+                </div>
+                {!this.state.username && <Register />}
             </div>
         )
     }
     showHome() {
+        if (!this.state.username) {
+            document.getElementById("register").style.display = "block";
+        }
         this.setState({
             isChat: false,
         })
