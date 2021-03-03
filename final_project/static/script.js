@@ -6,17 +6,20 @@ const threadsColumn = document.getElementById('threads');
 /* ------------------------------------------------------------
                         Register                                
 ------------------------------------------------------------ */
-
 class Register extends React.Component {
     constructor(props) {
         super(props);
-    }
-
-    render() {
-        if (document.getElementById("register")) {
-            showLogin()
+        this.state = {
+            isLogin: (this.props.registerType==='login') ? true : false,
+            fields: {},
+            errors: {},
         }
-
+        this.handleChange = this.handleChange.bind(this);
+        this.checkRegisterInput = this.checkRegisterInput.bind(this);
+        this.emailRegex = /.+@\w+(\.\w+)+/;
+    }
+    
+    render() {
         return (
             <div id="register">
                 <button 
@@ -25,59 +28,115 @@ class Register extends React.Component {
                 >&times;</button>
                 <div id="login" style={{display:"block"}}>
                     <h3>LOG IN</h3>
-                    <form>
-                        <label>
-                            Email:
-                            <input type="text" name="email" /><br/>
-                        </label>
-                        <label>
-                            Password:
-                            <input type="text" name="password" /><br/>
-                        </label>
+                    <form name="login-form" className="register-form" onSubmit={this.handleLogin}>
+                        <input 
+                            type="text" name="email" placeholder="Email" 
+                            onChange={this.handleChange}
+                        />
+                        <span className="error">{this.state.errors.email}</span><br/>
+                        <input 
+                            type="password" name="password" placeholder="Password" 
+                            onChange={this.handleChange}
+                        />
+                        <span className="error">{this.state.errors.password}</span><br/>
                         <input type="submit" value="Log in" />
                     </form>
                     <small>
                         Don't have an account? 
-                        <button onClick={showSignup}>SIGN UP</button>
+                        <button onClick={() => this.switchRegister()}>SIGN UP</button>
                     </small>
                 </div>
                 <div id="signup" style={{display:"none"}}>
                     <h3>CREATE AN ACCOUNT</h3>
-                    <form>
-                        <label>
-                            Email:
-                            <input type="text" name="email" /><br/>
-                        </label>
-                        <label>
-                            Username:
-                            <input type="text" name="username" /><br/>
-                        </label>
-                        <label>
-                            Password:
-                            <input type="text" name="password" /><br/>
-                        </label>
-                        <input type="submit" value="Sign up" />
+                    <form name="signup-form" className="register-form" onSubmit={this.handleSignup}>
+                        <input 
+                            type="text" name="email" placeholder="Email" 
+                            onChange={this.handleChange}
+                        />
+                        <span className="error">{this.state.errors.email}</span><br/>
+                        <input 
+                            type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
+                            onChange={this.handleChange}    
+                        />
+                        <span className="error">{this.state.errors.username}</span><br/>
+                        <input 
+                            type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
+                            onChange={this.handleChange}
+                        />
+                        <span className="error">{this.state.errors.password}</span><br/>
+                        <input type="submit" value="Sign up"/>
                     </form>
                     <small>
                         Already have an account? 
-                        <button onClick={showLogin}>LOG IN</button>
+                        <button onClick={() => this.switchRegister()}>LOG IN</button>
                     </small>
                 </div>
             </div>
-        )
-
-        function showLogin() {
-            document.getElementById("login").style.display="block";
-            document.getElementById("signup").style.display="none";
-        }
-
-        function showSignup() {
-            document.getElementById("signup").style.display="block";
-            document.getElementById("login").style.display="none";
-        }
+        )        
     }
 
-    
+    switchRegister() {
+        if (this.state.isLogin) {
+            document.getElementById('signup').style.display = 'block';
+            document.getElementById('login').style.display = 'none';
+        } else {
+            document.getElementById('login').style.display = 'block';
+            document.getElementById('signup').style.display = 'none';
+        }
+        this.setState({
+            isLogin: !this.state.isLogin,
+            fields: {},
+            errors: {},
+        })
+    }
+
+    handleChange(event) {
+        let fields = this.state.fields;
+        let field = event.target.name;
+        let value = event.target.value;
+        fields[field] = value;
+        this.setState({fields: fields});
+        this.checkRegisterInput();
+    }
+
+    checkRegisterInput() {
+        let fields = this.state.fields;
+        let errors = {};
+        
+        if ('email' in fields) {
+            let email = fields.email;
+            if (!email) {
+                errors['email'] = "Please enter your email address."
+            } else if (!this.emailRegex.test(email)) {
+                errors['email'] = "Invalid email address."
+            }
+        }
+
+        if ('password' in fields) {
+            let password = fields.password;
+            if (!password) {
+                errors['password'] = "Please enter your password."
+            } 
+            if (!this.state.isLogin && password.length < 8) {
+                errors['password'] = "Password too short."
+            }
+        }
+
+        if (!this.state.isLogin && 'username' in fields) {
+            if (!fields.username) {
+                errors['username'] = "Please create a username."
+            }
+        }
+
+        if ('email' in errors || 'username' in errors || 'password' in errors) {
+            this.setState({errors: errors});
+            return false;
+        } else {
+            this.setState({errors: {}});
+            return true;
+        }
+        
+    }
 }
 
 
@@ -114,8 +173,6 @@ class Nav extends React.Component {
 
         function showRegister() {
             document.getElementById("register").style.display = "block";
-            document.getElementById("login").style.display = "block";
-            document.getElementById("signup").style.display = "none";
         }
     }
 }
@@ -185,8 +242,6 @@ class Panel extends React.Component {
         super(props)
     }
     
-    
-
     render() {
         if (this.props.isChat) {
             return <Chat username={this.props.username}/>
@@ -202,7 +257,7 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: 'F',
+            username: null,
             isChat: true,
         }
     }
@@ -222,7 +277,7 @@ class App extends React.Component {
                         username={this.state.username}
                     />
                 </div>
-                {!this.state.username && <Register />}
+                {!this.state.username && <Register registerType="login"/>}
             </div>
         )
     }
