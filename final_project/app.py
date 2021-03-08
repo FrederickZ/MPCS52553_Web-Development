@@ -33,9 +33,6 @@ def generate_token():
 def index(chat_id=None, magic_key=None):
     return app.send_static_file('index.html')
 
-
-
-
 # -------------------------------- API ROUTES ---------------------------------
 
 @app.route('/api/register/login', methods=['POST'])
@@ -109,8 +106,9 @@ def get_channel():
             pass
         elif user_arg != None:
             query = """
-            SELECT user FROM channel NATURAL JOIN session
+            SELECT user FROM channel NATURAL JOIN session 
             """
+            return {"channels": channels}
         else:  # channel_id != None
             pass
     except Exception as e:

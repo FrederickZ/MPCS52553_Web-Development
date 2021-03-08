@@ -1,33 +1,6 @@
 const storage = window.localStorage;
 
 /* ------------------------------------------------------------
-                            Nav                                
------------------------------------------------------------- */
-
-class Nav extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        let username = this.props.username; 
-        return (
-            <div>
-                <button onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
-                <p>channels nav</p>
-                {username && 
-                    <div>
-                        <button><i className="material-icons">settings</i></button>
-                        <button onClick={this.props.logoutHandler}><i className="material-icons">logout</i></button>
-                        <p>Hi, {username}</p>
-                    </div>
-                }
-            </div>
-        )
-    }
-}
-
-/* ------------------------------------------------------------
                           Chat                                
 ------------------------------------------------------------ */
 
@@ -82,21 +55,21 @@ class Home extends React.Component {
     }
 
     render() {
-        const channel_blocks = this.state.channels ? this.state.channels.map(item => 
+        const channel_blocks = this.state.channels.map(item => 
             <div key={item.id}>
                 <h4>{item.name}</h4>
                 <small>Host: {item.host}</small>
             </div>
-        ) : [];
+        );
         return (
             <div id="home">
                 <h1>Welcome to Belay!</h1>
                 <div>
                     <input 
-                        type="text" name="new-channel" maxLength="80" onChange={this.inputHandler}
+                        type="text" name="new-channel" maxLength="80" onChange={this.props.inputHandler}
                         placeholder="Channel name (1-9, a-z, and '_' only; 1-80 characters)"
                     />
-                    <button onClick={this.channelCreator} >CREATE</button>
+                    <button onClick={this.props.channelCreator} >CREATE</button>
                 </div>
                 <div id="channels-list">
                     <p>channels list</p>
@@ -109,8 +82,172 @@ class Home extends React.Component {
 
 
 
+
+class UI extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+
+    render() {
+        if (this.props.isChat) {
+            return <Chat username={this.props.username}/>
+        } else {
+            return <Home 
+                username={this.props.username}
+                inputHandler={this.inputHandler}
+                channelCreator={this.channelCreator}
+            />
+        }
+    }
+}
+
+
 /* ------------------------------------------------------------
-                        Register                                
+                            Nav                                
+------------------------------------------------------------ */
+
+class Nav extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            userChannels: [],
+        }
+    }
+
+    componentDidMount() {
+        if (!this.props.username) {
+            return;
+        }
+
+        fetch(`/api/channel?user=${this.props.username}`, {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    this.setState({
+                        userChannels: data.channels,
+                    })
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
+    }
+
+    render() {
+        const channel_tabs = this.state.userChannels.map(item => 
+            <div key={item.id}>
+                <h4>{item.name}</h4>
+            </div>
+        );
+        return (
+            <div id="nav">
+                <button onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
+                <p>channels nav</p>
+                {this.props.username && 
+                    <div>
+                        <button><i className="material-icons">settings</i></button>
+                        <button onClick={this.props.logoutHandler}><i className="material-icons">logout</i></button>
+                        <p>Hi, {this.props.username}</p>
+                    </div>
+                }
+            </div>
+        )
+    }
+}
+
+
+/* ------------------------------------------------------------
+                             Panel                          
+------------------------------------------------------------ */
+
+class Panel extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            allChannels: [],
+            userChannels: [],
+            isChat: false,
+        }
+
+        this.newChannelName = '';
+        this.inputHandler = this.handleInput.bind(this);
+        this.channelCreator = this.createChannel.bind(this);
+        this.homeSwitcher = this.switchToHome.bind(this);
+        this.chatSwitcher = this.switchToChat.bind(this);
+    }
+    
+    render() {
+        return (
+            <div id="panel">
+                <Nav 
+                    username={this.props.username}
+                    logoutHandler={this.props.logoutHandler}
+                    homeSwitcher={this.homeSwitcher}
+                />
+                <UI 
+                    isChat={this.state.isChat} 
+                    username={this.props.username} 
+                    allChannelsGetter={this.allChannelsGetter}
+                    chatSwitcher={this.chatSwitcher}
+                />
+            </div>
+        )
+    }
+
+    handleInput(e) {
+        this.newChannelName = e.target.value
+    }
+
+    createChannel() {
+        let name = this.newChannelName;
+        if (!name || !/^[a-z0-9_]+$/.test(name)) {
+            alert("Please check your inputs.");
+            return;
+        }
+
+        fetch('/api/channel/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user: this.props.username, name: name})
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    console.log(data)
+
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
+    }
+
+    createSession() {
+
+    }
+
+    switchToHome() {
+        this.setState({
+            isChat: false,
+            channelId: '',
+        })
+    }
+    switchToChat() {
+        this.setState({
+            isChat: true,
+        })
+    }
+}
+
+
+
+/* ------------------------------------------------------------
+                        App + Register                                
 ------------------------------------------------------------ */
 
 class Register extends React.Component {
@@ -177,72 +314,11 @@ class Register extends React.Component {
     }
 }
 
-
-/* ------------------------------------------------------------
-                        Controller                                
------------------------------------------------------------- */
-
-class Panel extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            
-            allChannels: [],
-            userChannels: [],
-        }
-
-        this.newChannelName = '';
-        this.inputHandler = this.handleInput.bind(this);
-        this.channelCreator = this.createChannel.bind(this);
-    }
-    
-    render() {
-        if (this.props.isChat) {
-            return <Chat username={this.props.username}/>
-        } else {
-            return <Home 
-                username={this.props.username}
-            />
-        }
-    }
-
-    handleInput(e) {
-        this.createChannelName = e.target.value
-    }
-
-    createChannel() {
-        let name = this.newChannelName;
-        if (!name || !/^[a-z0-9_]+$/.test(name)) {
-            alert("Please check your inputs.");
-            return;
-        }
-
-        fetch('/api/channel/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user: this.props.username, name: name})
-        }).then((response) => {
-            if (response.status == 200) {
-                response.json().then((data) => {
-                    console.log(data)
-                    return data.channels
-                })
-            } else {
-                console.log(response.status);
-            }
-        }).catch((response) =>{
-            console.log(response);
-        })
-    }
-}
-
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: storage.getItem('username'),
-            isChat: false,
-            channelId: null,
+            username: storage.getItem('username') ? storage.getItem('username') : '',
         }
 
         this.registerFields = {};
@@ -250,33 +326,18 @@ class App extends React.Component {
         this.loginHandler = this.handleLogin.bind(this);
         this.signupHandler = this.handleSignup.bind(this);
         this.logoutHandler = this.handleLogout.bind(this);
-        this.homeSwitcher = this.switchToHome.bind(this);
-        this.chatSwitcher = this.switchToChat.bind(this);
     }
 
     render() {
         return (
             <div id="app">
-                <div id="main">
-                    <div id="nav">
-                        <Nav 
-                            username={this.state.username}
-                            logoutHandler={this.logoutHandler}
-                            homeSwitcher={this.homeSwitcher}
-                        />
-                    </div>
-                    <div id="panel">
-                        <Panel 
-                            isChat={this.state.isChat} 
-                            username={this.state.username} 
-                            allChannelsGetter={this.allChannelsGetter}
-                        />
-                    </div>
-                </div>
+                <Panel
+                    username={this.state.username}
+                    logoutHandler={this.logoutHandler}
+                />
                 {!this.state.username && 
                     <Register 
                         registerType="login"
-                        fields={this.registerFields}
                         inputHandler={this.inputHandler}
                         loginHandler={this.loginHandler}
                         signupHandler={this.signupHandler}
@@ -349,18 +410,6 @@ class App extends React.Component {
         this.setState({username: null})
         storage.removeItem('username')
     }
-    switchToHome() {
-        this.setState({
-            isChat: false,
-            channelId: '',
-        })
-    }
-    switchToChat() {
-        this.setState({
-            isChat: true,
-        })
-    }
-    
 }
 
 ReactDOM.render(<App />, document.getElementById('root'))
