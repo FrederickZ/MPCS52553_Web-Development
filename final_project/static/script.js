@@ -1,172 +1,8 @@
-const navColumn = document.getElementById('nav');
-const homeColumn = document.getElementById('home');
-const chatColumn = document.getElementById('chat')
-const threadsColumn = document.getElementById('threads');
-
-/* ------------------------------------------------------------
-                        Register                                
------------------------------------------------------------- */
-class Register extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            isLogin: (this.props.registerType==='login') ? true : false,
-            fields: {},
-            errors: {},
-        }
-        this.handleChange = this.handleChange.bind(this);
-        this.checkRegisterInput = this.checkRegisterInput.bind(this);
-        this.emailRegex = /.+@\w+(\.\w+)+/;
-    }
-    
-    render() {
-        return (
-            <div id="register" className="popup">
-                <div id="register-box" className="popup-box">
-                    <button 
-                        id="close-register" 
-                        onClick={() => { 
-                            document.getElementById("register").style.display="none";
-                            this.resetRegister();
-                        }}
-                    >&times;</button>
-                    <div id="login" style={{display: (this.state.isLogin ? "block" : "none")}}>
-                        <h3>LOG IN</h3>
-                        <form id="login-form" name="login-form" className="register-form" onSubmit={this.handleLogin}>
-                            <input 
-                                type="text" name="email" placeholder="Email" 
-                                onChange={this.handleChange}
-                            />
-                            <span className="error">{this.state.errors.email}</span><br/>
-                            <input 
-                                type="password" name="password" placeholder="Password" 
-                                onChange={this.handleChange}
-                            />
-                            <span className="error">{this.state.errors.password}</span><br/>
-                            <input type="submit" value="Log in" />
-                        </form>
-                        <small>
-                            Don't have an account? 
-                            <button onClick={() => this.switchRegister()}>SIGN UP</button>
-                        </small>
-                    </div>
-                    <div id="signup" style={{display: (this.state.isLogin ? "none" : "block")}}>
-                        <h3>CREATE AN ACCOUNT</h3>
-                        <form id="signup-form" name="signup-form" className="register-form" onSubmit={this.handleSignup}>
-                            <input 
-                                type="text" name="email" placeholder="Email" 
-                                onChange={this.handleChange}
-                            />
-                            <span className="error">{this.state.errors.email}</span><br/>
-                            <input 
-                                type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
-                                onChange={this.handleChange}    
-                            />
-                            <span className="error">{this.state.errors.username}</span><br/>
-                            <input 
-                                type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
-                                onChange={this.handleChange}
-                            />
-                            <span className="error">{this.state.errors.password}</span><br/>
-                            <input type="submit" value="Sign up"/>
-                        </form>
-                        <small>
-                            Already have an account? 
-                            <button onClick={() => this.switchRegister()}>LOG IN</button>
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            
-        )        
-    }
-
-    resetRegister() {
-        document.getElementById("login-form").reset();
-        document.getElementById("signup-form").reset();
-        this.setState({
-            fields: {},
-            errors: {},
-        })
-    }
-
-    switchRegister() {
-        this.setState({
-            isLogin: !this.state.isLogin,
-        })
-        this.resetRegister();
-    }
-
-    handleChange(event) {
-        let fields = this.state.fields;
-        let field = event.target.name;
-        let value = event.target.value;
-        fields[field] = value;
-        this.setState({fields: fields});
-        this.checkRegisterInput();
-    }
-
-    checkRegisterInput() {
-        let fields = this.state.fields;
-        let errors = {};
-        
-        if ('email' in fields) {
-            let email = fields.email;
-            if (!email) {
-                errors['email'] = "Please enter your email address."
-            } else if (!this.emailRegex.test(email)) {
-                errors['email'] = "Invalid email address."
-            }
-        }
-
-        if ('password' in fields) {
-            let password = fields.password;
-            if (!password) {
-                errors['password'] = "Please enter your password."
-            } 
-            if (!this.state.isLogin && password.length < 8) {
-                errors['password'] = "Password too short."
-            }
-        }
-
-        if (!this.state.isLogin && 'username' in fields) {
-            if (!fields.username) {
-                errors['username'] = "Please create a username."
-            }
-        }
-
-        if ('email' in errors || 'username' in errors || 'password' in errors) {
-            this.setState({errors: errors});
-            return false;
-        } else {
-            this.setState({errors: {}});
-            return true;
-        }
-    }
-
-    handleSubmit() {
-        
-    }
-}
-
-
+const storage = window.localStorage;
 
 /* ------------------------------------------------------------
                             Nav                                
 ------------------------------------------------------------ */
-
-function BackHome(props) {
-    return (
-        <button onClick={props.onBackHome}>
-            <i className="material-icons">add</i>
-        </button>
-    )
-}
-
-class UserChannel extends React.Component {
-
-}
 
 class Nav extends React.Component {
     constructor(props) {
@@ -177,26 +13,15 @@ class Nav extends React.Component {
         let username = this.props.username; 
         return (
             <div>
-                <BackHome onBackHome={this.props.onShowHome}/>
+                <button onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
                 <p>channels nav</p>
-                { username ? 
-                    <p><button><i className="material-icons">settings</i></button>Hi, {username}</p> : 
-                    <button onClick={showRegister}>Register</button>
+                {username && 
+                    <p><button><i className="material-icons">settings</i></button>Hi, {username}</p>
                 }
             </div>
         )
-
-        function showRegister() {
-            document.getElementById("register").style.display = "block";
-        }
     }
 }
-
-
-
-
-
-
 
 /* ------------------------------------------------------------
                            Chat                                
@@ -219,10 +44,7 @@ class Chat extends React.Component {
             </div>
         );
     }
-
 }
-
-
 
 /* ------------------------------------------------------------
                            Home                                
@@ -248,15 +70,84 @@ class Home extends React.Component {
         return (
             <div id="home">
                 <h1>Welcome to Belay!</h1>
+                <button onClick={this.newChannelHandler}></button>
                 <div id="channels-list">
                     <p>channels list</p>
                 </div>
             </div>
         );
     }
-
 }
 
+
+
+/* ------------------------------------------------------------
+                        Register                                
+------------------------------------------------------------ */
+
+class Register extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            isLogin: (this.props.registerType==='login') ? true : false,
+        }
+        this.resetRegister = this.resetRegister.bind(this);
+        this.switchRegister =this.switchRegister.bind(this);
+    }
+    
+    render() {
+        return (
+            <div id="register" className="popup">
+                <div id="register-box" className="popup-box">
+                    <div id="login" style={{display: (this.state.isLogin ? "block" : "none")}}>
+                        <h3>LOG IN</h3>
+                        <input type="text" name="email" placeholder="Email" onChange={this.props.inputHandler}/><br/>
+                        <input 
+                            type="password" name="password" placeholder="Password" 
+                            onChange={this.props.inputHandler}
+                        /><br/>
+                        <button id="login-button" onClick={this.props.loginHandler}>Log in</button><br/>
+                        <small>
+                            Don't have an account? 
+                            <button onClick={this.switchRegister}>SIGN UP</button>
+                        </small>
+                    </div>
+                    <div id="signup" style={{display: (this.state.isLogin ? "none" : "block")}}>
+                        <h3>CREATE AN ACCOUNT</h3>
+                        <input type="text" name="email" placeholder="Email" onChange={this.props.inputHandler}/><br/>
+                        <input 
+                            type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
+                            onChange={this.props.inputHandler}
+                        /><br/>
+                        <input 
+                            type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
+                            onChange={this.props.inputHandler}
+                        /><br/>
+                        <button id="signup-button" onClick={this.props.signupHandler}>Sign up</button><br/>
+                        <small>
+                            Already have an account? 
+                            <button onClick={this.switchRegister}>LOG IN</button>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    resetRegister() {
+        let inputElements = document.querySelectorAll("#register input");
+        for (let i = 0; i < inputElements.length; i++) {
+            inputElements[i].value = '';
+        }
+    }
+
+    switchRegister() {
+        this.setState({
+            isLogin: !this.state.isLogin,
+        })
+        this.resetRegister();
+    }
+}
 
 
 /* ------------------------------------------------------------
@@ -274,18 +165,24 @@ class Panel extends React.Component {
         } else {
             return <Home />
         }
-    }
-
-    
+    }    
 }
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: 'F',
+            username: storage.getItem('username'),
             isChat: true,
         }
+
+        this.registerFields = {};
+        this.inputHandler = this.handleInput.bind(this);
+        this.loginHandler = this.handleLogin.bind(this);
+        this.signupHandler = this.handleSignup.bind(this);
+        
+        this.homeSwitcher = this.switchToHome.bind(this);
+        this.getChannelsHandler = this.getChannels.bind(this);
     }
 
     render() {
@@ -293,23 +190,26 @@ class App extends React.Component {
             <div id="app">
                 <div id="main">
                     <div id="nav">
-                        <Nav
-                            username={this.state.username}
-                            onShowHome={() => this.showHome()}
-                        />
+                        <Nav username={this.state.username} homeSwitcher={this.homeSwitcher} />
                     </div>
                     <div id="panel">
-                        <Panel 
-                            isChat={this.state.isChat}
-                            username={this.state.username}
-                        />
+                        <Panel isChat={this.state.isChat} username={this.state.username} />
                     </div>
                 </div>
-                {!this.state.username && <Register registerType="login"/>}
+                {!this.state.username && 
+                    <Register 
+                        registerType="login"
+                        fields={this.registerFields}
+                        inputHandler={this.inputHandler}
+                        loginHandler={this.loginHandler}
+                        signupHandler={this.signupHandler}
+                    />
+                }
             </div>
         )
     }
-    showHome() {
+
+    switchToHome() {
         if (!this.state.username) {
             document.getElementById("register").style.display = "block";
         }
@@ -317,7 +217,71 @@ class App extends React.Component {
             isChat: false,
         })
     }
-}
 
+    handleInput(e) {
+        let field = e.target.name;
+        let value = e.target.value;
+        this.registerFields[field] = value;
+    }
+    handleLogin() {
+        let email = this.registerFields.email;
+        let password = this.registerFields.password;
+
+        if ((!email || !/.+@\w+(\.\w+)+$/.test(email)) || !password) {
+            alert("Please check your inputs.");
+            return;
+        }
+
+        fetch("/api/register/login", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, password: password})
+        }).then((response) => {
+            if(response.status == 200) {
+                response.json().then((data) => {
+                    console.log(data)
+                    this.setState({username: data.username})
+                    storage.setItem('username', data.username)
+                });
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
+    }
+    handleSignup() {
+        let email = this.registerFields.email;
+        let username = this.registerFields.username;
+        let password = this.registerFields.password;
+
+        if ((!email || !/.+@\w+(\.\w+)+$/.test(email)) || !username || (!password || password.length < 8)) {
+            alert("Please check your inputs.")
+            return;
+        }
+
+        fetch("/api/register/signup", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, username: username, password: password})
+        }).then((response) => {
+            if(response.status == 200) {
+                response.json().then((data) => {
+                    console.log(data)
+                    this.setState({username: data.username})
+                    storage.setItem('username', data.username)
+                });
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
+    }
+
+    getChannels() {
+        
+    }
+}
 
 ReactDOM.render(<App />, document.getElementById('root'))

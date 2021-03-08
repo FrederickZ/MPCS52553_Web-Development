@@ -1,9 +1,11 @@
 html {
     font-family: sans-serif;
+    
     height: 100%;
 }
 body {
     height: 100%;
+    color: rgb(41, 45, 62);
     margin: 0;
 }
 
@@ -44,9 +46,6 @@ body {
     border-radius: 5px;
     border: 2px solid black;
 }
-/* #login {
-    display: "block";
+.error {
+    font-size: small;
 }
-#signup {
-    display: none;
-} */
