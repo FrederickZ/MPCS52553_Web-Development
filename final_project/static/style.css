@@ -1,15 +1,14 @@
 html {
     font-family: sans-serif;
-    
-    height: 100%;
 }
 body {
-    height: 100%;
     color: rgb(41, 45, 62);
     margin: 0;
 }
-
-#main {
+#app {
+    height: 100%;
+}
+#panel {
     position: absolute;
     top: 0%;
     left: 0%;
@@ -23,7 +22,7 @@ body {
     background-color: rgb(51, 55, 71);
     color: white;
 }
-#panel {
+#ui {
     height: 100%;
 }
 .popup {

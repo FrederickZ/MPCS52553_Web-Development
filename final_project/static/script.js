@@ -188,12 +188,15 @@ class Panel extends React.Component {
                     logoutHandler={this.props.logoutHandler}
                     homeSwitcher={this.homeSwitcher}
                 />
-                <UI 
-                    isChat={this.state.isChat} 
-                    username={this.props.username} 
-                    allChannelsGetter={this.allChannelsGetter}
-                    chatSwitcher={this.chatSwitcher}
-                />
+                <div id="ui">
+                    <UI 
+                        isChat={this.state.isChat} 
+                        username={this.props.username} 
+                        allChannelsGetter={this.allChannelsGetter}
+                        chatSwitcher={this.chatSwitcher}
+                    />
+                </div>
+                
             </div>
         )
     }
