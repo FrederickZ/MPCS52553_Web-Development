@@ -145,10 +145,10 @@ class Nav extends React.Component {
         );
         return (
             <div id="nav">
-                <button onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
                 <p>channels nav</p>
+                <button id="back-home" onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
                 {this.props.username && 
-                    <div>
+                    <div id="profile">
                         <button><i className="material-icons">settings</i></button>
                         <button onClick={this.props.logoutHandler}><i className="material-icons">logout</i></button>
                         <p>Hi, {this.props.username}</p>
