@@ -1,12 +1,16 @@
 from flask import Flask, render_template, request
 import mysql.connector
 import bcrypt
+import random
+import string
 import sys
 
 DB_NAME = 'yumingz'
 DB_USERNAME = 'root'
 DB_PASSWORD = 'root'
+
 PEPPER = 'Welcome to Belay!'
+TOKEN_LENGTH = 16
 
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -18,6 +22,9 @@ try:
     conn.close()
 except Exception as e:
     sys.exit('Fail to connect mysql server. Error ' + str(e))
+
+def generate_token():
+    return ''.join(random.choices(string.ascii_lowercase+string.digits, k=TOKEN_LENGTH))
 
 # -------------------------------- WEB ROUTES ---------------------------------
 
@@ -34,19 +41,17 @@ def index(chat_id=None, magic_key=None):
 @app.route('/api/register/login', methods=['POST'])
 def login():
     body = request.get_json()
-    print(body)
-
     email = body['email']
     password = body['password']
 
-    connection = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
-    cursor = connection.cursor()
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur= conn.cursor()
 
     query = "SELECT username, password FROM user WHERE email=%s"
 
     try:
-        cursor.execute(query, (email,))
-        username, encrypted_password = cursor.fetchone()
+        cur.execute(query, (email,))
+        username, encrypted_password = cur.fetchone()
         if bcrypt.checkpw((password+PEPPER).encode('utf-8'), encrypted_password.encode('utf-8')):
             print("success")
             return {"username": username}
@@ -55,8 +60,8 @@ def login():
         print(e)
         return {}, 404
     finally:
-        cursor.close()
-        connection.close()
+        cur.close()
+        conn.close()
 
 
 @app.route('/api/register/signup', methods=['POST'])
@@ -67,19 +72,110 @@ def signup():
     password = body['password'] + PEPPER
     encrypted_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-    connection = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
-    cursor = connection.cursor()
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
 
-    query = "INSERT into user (email, username, password) VALUES (%s, %s, %s)"
+    query = "INSERT into user VALUES (%s, %s, %s)"
     
     try:
-        cursor.execute(query, (email, username, encrypted_password))
-        connection.commit()
+        cur.execute(query, (username, email, encrypted_password))
+        conn.commit()
         print("success")
         return {"username": username}
     except Exception as e:
         print(e)
         return {"username": username}, 302
     finally:
-        cursor.close()
-        connection.close()
+        cur.close()
+        conn.close()
+
+@app.route('/api/channel', methods=['GET'])
+def get_channel():
+    user_arg = request.args.get("user")
+    id_arg = request.args.get("id", type=int)
+
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+
+    try:
+        if user_arg == None and id_arg == None:
+            cur.execute("SELECT * FROM channel")
+            channels = []
+            for channel in cur.fetchall():
+                id, name, host = channel
+                channels.append({'id': id, 'name': name, 'host': host})
+            print("success")
+            return {"channels": channels}
+        elif user_arg != None and id_arg != None:
+            pass
+        elif user_arg != None:
+            query = """
+            SELECT user FROM channel NATURAL JOIN session
+            """
+        else:  # channel_id != None
+            pass
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()
+
+@app.route('/api/channel/create', methods=['POST'])
+def create_channel():
+    body = request.get_json()
+    user = body["user"]
+    name = body["name"]
+
+    if user == None or name == None:
+        return {}, 302
+
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = "INSERT into channel (name, host) VALUES (%s, %s)"
+
+    try:
+        cur.execute(query, (name, user))
+        conn.commit()
+        print("success")
+        return {
+            "id": conn.insert_id(), 
+            "name": name, 
+            "host": user
+        }
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()
+
+@app.route('/api/session/create', methods=['POST'])
+def create_session():
+    body = request.get_json()
+    user_arg = request.args.get("user")
+    channel_id_arg = request.args.get("channel_id")
+    token = generate_token()
+    
+    if user_arg == None or channel_id_arg == None:
+        return {}, 302
+
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = "INSERT into session VALUES (%s, %d, %s)"
+
+    try:
+        cur.execute(query, (token, channel_id_arg, user_arg))
+        conn.commit()
+        print("success")
+        return {
+            "channel_id": channel_id_arg,
+            "token": token,
+            "user": user_arg
+        }
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()

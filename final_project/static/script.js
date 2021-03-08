@@ -50,32 +50,74 @@ class Chat extends React.Component {
                            Home                                
 ------------------------------------------------------------ */
 
-class Channel extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        return (<div></div>)
-    }
-}
-
-
 class Home extends React.Component {
     constructor(props) {
         super(props)
+        this.allChannelsGetter = this.getAllChannels.bind(this)
+        this.channelCreator = this.createChannel.bind(this)
     }
 
     render() {
+        const channels = this.allChannelsGetter()
+        const channel_blocks = channels ? channels.map((id, name, host) => 
+            <div>
+                <h4>{name}</h4>
+                <small>Host: {host}</small>
+            </div>
+        ) : [];
         return (
             <div id="home">
                 <h1>Welcome to Belay!</h1>
-                <button onClick={this.newChannelHandler}></button>
+                <div>
+                    <input 
+                        type="text" name="new-channel" maxLength="80"
+                        placeholder="Channel name (1-9, a-z, and '_' only; 1-80 characters)"
+                    />
+                    <button onClick={this.createChannel}>CREATE CHANNEL</button>
+                </div>
                 <div id="channels-list">
                     <p>channels list</p>
+                    <div>{channel_blocks}</div>
                 </div>
             </div>
         );
+    }
+
+    getAllChannels() {
+        fetch("/api/channel", {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    console.log(data)
+                    return data.channels
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
+    }
+
+    createChannel() {
+        fetch('/api/channel/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user: this.props.username, name: window.prompt("Create a name for your channel: ")})
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    console.log(data)
+                    return data.channels
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
     }
 }
 
@@ -163,7 +205,7 @@ class Panel extends React.Component {
         if (this.props.isChat) {
             return <Chat username={this.props.username}/>
         } else {
-            return <Home />
+            return <Home username={this.props.username}/>
         }
     }    
 }
@@ -173,6 +215,7 @@ class App extends React.Component {
         super(props);
         this.state = {
             username: storage.getItem('username'),
+            channels: [],
             isChat: true,
         }
 
@@ -182,7 +225,6 @@ class App extends React.Component {
         this.signupHandler = this.handleSignup.bind(this);
         
         this.homeSwitcher = this.switchToHome.bind(this);
-        this.getChannelsHandler = this.getChannels.bind(this);
     }
 
     render() {
@@ -193,7 +235,11 @@ class App extends React.Component {
                         <Nav username={this.state.username} homeSwitcher={this.homeSwitcher} />
                     </div>
                     <div id="panel">
-                        <Panel isChat={this.state.isChat} username={this.state.username} />
+                        <Panel 
+                            isChat={this.state.isChat} 
+                            username={this.state.username} 
+                            allChannelsGetter={this.allChannelsGetter}
+                        />
                     </div>
                 </div>
                 {!this.state.username && 
@@ -237,7 +283,7 @@ class App extends React.Component {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({email: email, password: password})
         }).then((response) => {
-            if(response.status == 200) {
+            if (response.status == 200) {
                 response.json().then((data) => {
                     console.log(data)
                     this.setState({username: data.username})
@@ -265,7 +311,7 @@ class App extends React.Component {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({email: email, username: username, password: password})
         }).then((response) => {
-            if(response.status == 200) {
+            if (response.status == 200) {
                 response.json().then((data) => {
                     console.log(data)
                     this.setState({username: data.username})
@@ -279,9 +325,7 @@ class App extends React.Component {
         })
     }
 
-    getChannels() {
-        
-    }
+    
 }
 
 ReactDOM.render(<App />, document.getElementById('root'))

@@ -1,17 +1,26 @@
-create table user (
-    usr_id      INT             AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS user (
+    username    VARCHAR(40),
     email       VARCHAR(255)    NOT NULL UNIQUE,
-    username    VARCHAR(40)     NOT NULL UNIQUE,
     password    VARCHAR(60)     NOT NULL UNIQUE,
-    PRIMARY KEY (usr_id)
+    PRIMARY KEY (username)
 );
 
-create table channel (
-    cnl_id      INT             AUTO_INCREMENT,
-    name        VARCHAR(80)     NOT NULL UNIQUE,
-    creater     INT             NOT NULL,
-    PRIMARY KEY (cnl_id),
-    FOREIGN KEY (creater) REFERENCES user(usr_id)
+CREATE TABLE IF NOT EXISTS channel (
+    id         INT             AUTO_INCREMENT,
+    name       VARCHAR(80)     NOT NULL UNIQUE,
+    host       VARCHAR(40)     NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (host)      REFERENCES user(username)
+);
+
+CREATE TABLE IF NOT EXISTS session (
+    token       CHAR(16),
+    channel     INT             NOT NULL,
+    user        VARCHAR(40)     NOT NULL,
+    create_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (token),
+    FOREIGN KEY (channel)   REFERENCES channel(id),
+    FOREIGN KEY (user)      REFERENCES user(username)
 );
 
 -- create table message {
@@ -23,13 +32,3 @@ create table channel (
 --     FOREIGN KEY (channel) REFERENCES channel(channel_id),
 --     FOREIGN KEY (sender) REFERENCES user(user_id)
 -- } ENGINE=MyISAM;
-
--- create table reply {
---     message INT,
---     reply_id INT AUTO_INCREMENT,
---     sender INT,
---     content TEXT
---     PRIMARY KEY (message_id, reply_id),
---     FOREIGN KEY (message) REFERENCES message(message),
---     FOREIGN KEY (sender) REFERENCES user(user_id)
--- };
