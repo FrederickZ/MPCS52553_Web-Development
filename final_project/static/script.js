@@ -16,7 +16,11 @@ class Nav extends React.Component {
                 <button onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
                 <p>channels nav</p>
                 {username && 
-                    <p><button><i className="material-icons">settings</i></button>Hi, {username}</p>
+                    <div>
+                        <button><i className="material-icons">settings</i></button>
+                        <button onClick={this.props.logoutHandler}><i className="material-icons">logout</i></button>
+                        <p>Hi, {username}</p>
+                    </div>
                 }
             </div>
         )
@@ -24,7 +28,7 @@ class Nav extends React.Component {
 }
 
 /* ------------------------------------------------------------
-                           Chat                                
+                          Chat                                
 ------------------------------------------------------------ */
 
 class Chat extends React.Component {
@@ -53,16 +57,35 @@ class Chat extends React.Component {
 class Home extends React.Component {
     constructor(props) {
         super(props)
-        this.allChannelsGetter = this.getAllChannels.bind(this)
-        this.channelCreator = this.createChannel.bind(this)
+        this.state = {
+            channels: []
+        }
+    }
+
+    componentDidMount() {
+        fetch("/api/channel", {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    this.setState({
+                        channels: data.channels,
+                    })
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
     }
 
     render() {
-        const channels = this.allChannelsGetter()
-        const channel_blocks = channels ? channels.map((id, name, host) => 
-            <div>
-                <h4>{name}</h4>
-                <small>Host: {host}</small>
+        const channel_blocks = this.state.channels ? this.state.channels.map(item => 
+            <div key={item.id}>
+                <h4>{item.name}</h4>
+                <small>Host: {item.host}</small>
             </div>
         ) : [];
         return (
@@ -70,10 +93,10 @@ class Home extends React.Component {
                 <h1>Welcome to Belay!</h1>
                 <div>
                     <input 
-                        type="text" name="new-channel" maxLength="80"
+                        type="text" name="new-channel" maxLength="80" onChange={this.inputHandler}
                         placeholder="Channel name (1-9, a-z, and '_' only; 1-80 characters)"
                     />
-                    <button onClick={this.createChannel}>CREATE CHANNEL</button>
+                    <button onClick={this.channelCreator} >CREATE</button>
                 </div>
                 <div id="channels-list">
                     <p>channels list</p>
@@ -81,44 +104,7 @@ class Home extends React.Component {
                 </div>
             </div>
         );
-    }
-
-    getAllChannels() {
-        fetch("/api/channel", {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'},
-        }).then((response) => {
-            if (response.status == 200) {
-                response.json().then((data) => {
-                    console.log(data)
-                    return data.channels
-                })
-            } else {
-                console.log(response.status);
-            }
-        }).catch((response) =>{
-            console.log(response);
-        })
-    }
-
-    createChannel() {
-        fetch('/api/channel/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user: this.props.username, name: window.prompt("Create a name for your channel: ")})
-        }).then((response) => {
-            if (response.status == 200) {
-                response.json().then((data) => {
-                    console.log(data)
-                    return data.channels
-                })
-            } else {
-                console.log(response.status);
-            }
-        }).catch((response) =>{
-            console.log(response);
-        })
-    }
+    }    
 }
 
 
@@ -199,15 +185,55 @@ class Register extends React.Component {
 class Panel extends React.Component {
     constructor(props) {
         super(props)
+        this.state = {
+            
+            allChannels: [],
+            userChannels: [],
+        }
+
+        this.newChannelName = '';
+        this.inputHandler = this.handleInput.bind(this);
+        this.channelCreator = this.createChannel.bind(this);
     }
     
     render() {
         if (this.props.isChat) {
             return <Chat username={this.props.username}/>
         } else {
-            return <Home username={this.props.username}/>
+            return <Home 
+                username={this.props.username}
+            />
         }
-    }    
+    }
+
+    handleInput(e) {
+        this.createChannelName = e.target.value
+    }
+
+    createChannel() {
+        let name = this.newChannelName;
+        if (!name || !/^[a-z0-9_]+$/.test(name)) {
+            alert("Please check your inputs.");
+            return;
+        }
+
+        fetch('/api/channel/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user: this.props.username, name: name})
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    console.log(data)
+                    return data.channels
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
+    }
 }
 
 class App extends React.Component {
@@ -215,16 +241,17 @@ class App extends React.Component {
         super(props);
         this.state = {
             username: storage.getItem('username'),
-            channels: [],
-            isChat: true,
+            isChat: false,
+            channelId: null,
         }
 
         this.registerFields = {};
         this.inputHandler = this.handleInput.bind(this);
         this.loginHandler = this.handleLogin.bind(this);
         this.signupHandler = this.handleSignup.bind(this);
-        
+        this.logoutHandler = this.handleLogout.bind(this);
         this.homeSwitcher = this.switchToHome.bind(this);
+        this.chatSwitcher = this.switchToChat.bind(this);
     }
 
     render() {
@@ -232,7 +259,11 @@ class App extends React.Component {
             <div id="app">
                 <div id="main">
                     <div id="nav">
-                        <Nav username={this.state.username} homeSwitcher={this.homeSwitcher} />
+                        <Nav 
+                            username={this.state.username}
+                            logoutHandler={this.logoutHandler}
+                            homeSwitcher={this.homeSwitcher}
+                        />
                     </div>
                     <div id="panel">
                         <Panel 
@@ -253,15 +284,6 @@ class App extends React.Component {
                 }
             </div>
         )
-    }
-
-    switchToHome() {
-        if (!this.state.username) {
-            document.getElementById("register").style.display = "block";
-        }
-        this.setState({
-            isChat: false,
-        })
     }
 
     handleInput(e) {
@@ -285,7 +307,6 @@ class App extends React.Component {
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
-                    console.log(data)
                     this.setState({username: data.username})
                     storage.setItem('username', data.username)
                 });
@@ -324,7 +345,21 @@ class App extends React.Component {
             console.log(response);
         })
     }
-
+    handleLogout() {
+        this.setState({username: null})
+        storage.removeItem('username')
+    }
+    switchToHome() {
+        this.setState({
+            isChat: false,
+            channelId: '',
+        })
+    }
+    switchToChat() {
+        this.setState({
+            isChat: true,
+        })
+    }
     
 }
 

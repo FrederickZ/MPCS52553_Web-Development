@@ -104,7 +104,6 @@ def get_channel():
             for channel in cur.fetchall():
                 id, name, host = channel
                 channels.append({'id': id, 'name': name, 'host': host})
-            print("success")
             return {"channels": channels}
         elif user_arg != None and id_arg != None:
             pass
@@ -139,7 +138,7 @@ def create_channel():
         conn.commit()
         print("success")
         return {
-            "id": conn.insert_id(), 
+            "id": cur.lastrowid, 
             "name": name, 
             "host": user
         }
