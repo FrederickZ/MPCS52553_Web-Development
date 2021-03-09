@@ -50,7 +50,6 @@ def login():
         cur.execute(query, (email,))
         username, encrypted_password = cur.fetchone()
         if bcrypt.checkpw((password+PEPPER).encode('utf-8'), encrypted_password.encode('utf-8')):
-            print("success")
             return {"username": username}
         return {}, 404
     except Exception as e:
@@ -72,12 +71,11 @@ def signup():
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
 
-    query = "INSERT into user VALUES (%s, %s, %s)"
+    query = "INSERT INTO user VALUES (%s, %s, %s)"
     
     try:
         cur.execute(query, (username, email, encrypted_password))
         conn.commit()
-        print("success")
         return {"username": username}
     except Exception as e:
         print(e)
@@ -97,18 +95,30 @@ def get_channel():
     try:
         if user_arg == None and id_arg == None:
             cur.execute("SELECT * FROM channel")
-            channels = []
+            all_channels = []
             for channel in cur.fetchall():
                 id, name, host = channel
-                channels.append({'id': id, 'name': name, 'host': host})
-            return {"channels": channels}
+                all_channels.append({'id': id, 'name': name, 'host': host})
+            return {"channels": all_channels}
         elif user_arg != None and id_arg != None:
             pass
         elif user_arg != None:
             query = """
-            SELECT user FROM channel NATURAL JOIN session 
+            SELECT channel, name, token, create_at 
+            FROM channel JOIN session ON channel.id = session.channel
+            WHERE user = %s
             """
-            return {"channels": channels}
+            cur.execute(query, (user_arg, ))
+            user_channels = []
+            for channel in cur.fetchall():
+                id, name, token, create_at = channel
+                user_channels.append({
+                    'id': id, 
+                    'name': name, 
+                    'token': token, 
+                    'create_at': create_at
+                })
+            return {"channels": user_channels}
         else:  # channel_id != None
             pass
     except Exception as e:
@@ -129,7 +139,7 @@ def create_channel():
 
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
-    query = "INSERT into channel (name, host) VALUES (%s, %s)"
+    query = "INSERT INTO channel (name, host) VALUES (%s, %s)"
 
     try:
         cur.execute(query, (name, user))
@@ -150,28 +160,30 @@ def create_channel():
 @app.route('/api/session/create', methods=['POST'])
 def create_session():
     body = request.get_json()
-    user_arg = request.args.get("user")
-    channel_id_arg = request.args.get("channel_id")
+    print(body)
+    user = body["user"]
+    channel_id = body["channel_id"]
     token = generate_token()
     
-    if user_arg == None or channel_id_arg == None:
+    if user == None or channel_id == None:
         return {}, 302
 
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
-    query = "INSERT into session VALUES (%s, %d, %s)"
-
+    query = "INSERT INTO session (token, channel, user) VALUES (%s, %s, %s)"
+    print("here")
     try:
-        cur.execute(query, (token, channel_id_arg, user_arg))
+        cur.execute(query, (token, channel_id, user))
         conn.commit()
         print("success")
         return {
-            "channel_id": channel_id_arg,
+            "id": channel_id,
             "token": token,
-            "user": user_arg
+            "user": user
         }
     except Exception as e:
         print(e)
+        
         return {}, 302
     finally:
         cur.close()

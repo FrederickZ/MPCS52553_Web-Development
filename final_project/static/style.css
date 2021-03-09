@@ -36,11 +36,13 @@ body {
     position: absolute;
     bottom: 0;
     display: grid;
-    grid-template-columns: 40px 40px auto;
+    grid-template-columns: 120px 40px 40px;
 }
 #profile button {
-    border: none;
     width: 40px;
+    border: none;
+    background: none;
+    color: white
 }
 #ui {
     height: 100%;

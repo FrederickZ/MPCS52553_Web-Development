@@ -80,9 +80,6 @@ class Home extends React.Component {
     }    
 }
 
-
-
-
 class UI extends React.Component {
     constructor(props) {
         super(props)
@@ -94,8 +91,8 @@ class UI extends React.Component {
         } else {
             return <Home 
                 username={this.props.username}
-                inputHandler={this.inputHandler}
-                channelCreator={this.channelCreator}
+                inputHandler={this.props.inputHandler}
+                channelCreator={this.props.channelCreator}
             />
         }
     }
@@ -146,12 +143,13 @@ class Nav extends React.Component {
         return (
             <div id="nav">
                 <p>channels nav</p>
+                <div>{channel_tabs}</div>
                 <button id="back-home" onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
                 {this.props.username && 
                     <div id="profile">
+                        <p>Hi, {this.props.username}</p>
                         <button><i className="material-icons">settings</i></button>
                         <button onClick={this.props.logoutHandler}><i className="material-icons">logout</i></button>
-                        <p>Hi, {this.props.username}</p>
                     </div>
                 }
             </div>
@@ -178,6 +176,8 @@ class Panel extends React.Component {
         this.channelCreator = this.createChannel.bind(this);
         this.homeSwitcher = this.switchToHome.bind(this);
         this.chatSwitcher = this.switchToChat.bind(this);
+
+        this.newSessionChannelId = 0;
     }
     
     render() {
@@ -190,10 +190,12 @@ class Panel extends React.Component {
                 />
                 <div id="ui">
                     <UI 
-                        isChat={this.state.isChat} 
+                        isChat={this.state.isChat}
                         username={this.props.username} 
                         allChannelsGetter={this.allChannelsGetter}
                         chatSwitcher={this.chatSwitcher}
+                        channelCreator={this.channelCreator}
+                        inputHandler={this.inputHandler}
                     />
                 </div>
                 
@@ -208,7 +210,7 @@ class Panel extends React.Component {
     createChannel() {
         let name = this.newChannelName;
         if (!name || !/^[a-z0-9_]+$/.test(name)) {
-            alert("Please check your inputs.");
+            alert(`Invalid: ${name}`);
             return;
         }
 
@@ -220,7 +222,8 @@ class Panel extends React.Component {
             if (response.status == 200) {
                 response.json().then((data) => {
                     console.log(data)
-
+                    this.newSessionChannelId = data.id
+                    this.createSession()
                 })
             } else {
                 console.log(response.status);
@@ -231,7 +234,22 @@ class Panel extends React.Component {
     }
 
     createSession() {
-
+        fetch('/api/session/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user: this.props.username, channel_id: this.newSessionChannelId})
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    console.log(data)
+                    this.setState({isChat: true})
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
     }
 
     switchToHome() {
