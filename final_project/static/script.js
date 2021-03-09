@@ -1,378 +1,234 @@
-const storage = window.localStorage;
-if (storage.getItem('isChat') == null) {
-    storage.setItem('isChat', false)
-}
 
-/* ------------------------------------------------------------
-                          Chat                                
------------------------------------------------------------- */
+class Screen extends React.Component {}
 
-class Chat extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-
-    render() {
-        return (
-            <div id="chat">
-                <div id="messages-scroll">
-                    <p>messages</p>
-                </div>
-                <div id="chat-box">
-                    <p>chat box</p>
-                </div>
-            </div>
-        );
-    }
-}
-
-/* ------------------------------------------------------------
-                           Home                                
------------------------------------------------------------- */
-
-class Home extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            channels: []
-        }
-    }
-
-    componentDidMount() {
-        fetch("/api/channel", {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'},
-        }).then((response) => {
-            if (response.status == 200) {
-                response.json().then((data) => {
-                    this.setState({
-                        channels: data.channels,
-                    })
-                })
-            } else {
-                console.log(response.status);
-            }
-        }).catch((response) =>{
-            console.log(response);
-        })
-    }
-
-    render() {
-        const channel_blocks = this.state.channels.map(item => 
-            <div key={item.id} className="channel-block">
-                <h4>{item.name}</h4>
-                <small>Host: {item.host}</small>
-            </div>
-        );
-        return (
-            <div id="home">
-                <div id="channels-list">
-                    {channel_blocks}
-                </div>
-                <div id="create-channel-div">
-                    <input id= "new-channel-input" type="text" maxLength="40" onChange={this.props.inputHandler}
-                        placeholder="Channel name (1-9, a-z, and '_' only; 1-40 characters)"
-                    />
-                    <button id="create-channel-btn" onClick={this.props.channelCreator}>CREATE</button>
-                </div>
-            </div>
-        );
-    }    
-}
-
-class UI extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-
-    render() {
-        if (storage.getItem('isChat') == true) {
-            return <Chat username={this.props.username}/>
-        } else {
-            return <Home 
-                username={this.props.username}
-                inputHandler={this.props.inputHandler}
-                channelCreator={this.props.channelCreator}
-            />
-        }
-    }
-}
 
 
 /* ------------------------------------------------------------
-                            Nav                                
+                        Nav                                
 ------------------------------------------------------------ */
 
-class Nav extends React.Component {
+
+function Logo(props) {
+    return (
+        <div id="logo">
+            <h1>BELAY</h1>
+            <small>1.0.0</small>
+        </div>
+    );
+}
+
+function ChannelTab(props) {    
+    return (
+        <div className="channel-tab" key={props.id}>
+            <h4>{props.name}</h4>
+        </div>
+    );
+}
+
+class ChannelTabsBar extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             userChannels: [],
-        }
-    }
-
-    componentDidMount() {
-        if (!this.props.username) {
-            return;
-        }
-
-        fetch(`/api/channel?user=${this.props.username}`, {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'},
-        }).then((response) => {
-            if (response.status == 200) {
-                response.json().then((data) => {
-                    this.setState({
-                        userChannels: data.channels,
-                    })
-                })
-            } else {
-                console.log(response.status);
-            }
-        }).catch((response) =>{
-            console.log(response);
-        })
+        };
     }
 
     render() {
-        const channel_tabs = this.state.userChannels.map(item => 
-            <div key={item.id}>
-                <h4>{item.name}</h4>
-            </div>
-        );
+        return null
+    }
+    
+}
+
+function Profile(props) {
+    return (
+        <div id="profile">
+            <p>Hi, {storage.username}</p>
+            <button variant="light"><i className="material-icons">settings</i></button>
+            <button variant="light" onClick={props.onClickLogout}><i className="material-icons">logout</i></button>
+        </div>
+    )
+}
+
+class Nav extends React.Component {
+    render() {
         return (
             <div id="nav">
-                <div id="logo">
-                    <h1>BELAY</h1>
-                    <small>1.0.0</small>
-                </div>
-                <div>{channel_tabs}</div>
-                <button id="back-home" onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
-                {this.props.username && 
-                    <div id="profile">
-                        <p>Hi, {this.props.username}</p>
-                        <button><i className="material-icons">settings</i></button>
-                        <button onClick={this.props.logoutHandler}><i className="material-icons">logout</i></button>
-                    </div>
-                }
+                <ChannelTabsBar 
+                    userChannelsGetter={this.getUserChannels}
+                />
+                <button variant="light"><i className="material-icons">add</i></button>
+                <Profile onClickLogout={this.props.handleLogout}/>
             </div>
-        )
+        );
     }
 }
 
+class Navbar extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            userChannels: []
+        }
+    }
+
+    
+    
+    render() {
+        return (
+            <div id="navbar">
+                <Logo />
+                {this.props.username && <Nav />}
+            </div>
+        )
+    };
+}
+
+
+
 
 /* ------------------------------------------------------------
-                             Panel                          
+                    Panel Controller                                
 ------------------------------------------------------------ */
 
 class Panel extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {
-            allChannels: [],
-            userChannels: [],
-        }
 
-        this.newChannelName = '';
-        this.inputHandler = this.handleInput.bind(this);
-        this.channelCreator = this.createChannel.bind(this);
-        this.homeSwitcher = this.switchToHome.bind(this);
-        this.chatSwitcher = this.switchToChat.bind(this);
-
-        this.newSessionChannelId = 0;
+        this.handleLogout = this.handleLogout.bind(this);
     }
-    
+
+    handleLogout() {
+        storage.clear();
+    }
+
     render() {
         return (
             <div id="panel">
-                <Nav 
-                    username={this.props.username}
-                    logoutHandler={this.props.logoutHandler}
-                    homeSwitcher={this.homeSwitcher}
-                />
-                <div id="ui">
-                    <UI 
-                        username={this.props.username} 
-                        allChannelsGetter={this.allChannelsGetter}
-                        chatSwitcher={this.chatSwitcher}
-                        channelCreator={this.channelCreator}
-                        inputHandler={this.inputHandler}
-                    />
-                </div>
-                
+                <Navbar handleLogout={this.props.handleLogout}/>
+                {this.props.username && <Screen />}
             </div>
-        )
+        );
     }
+}
 
-    handleInput(e) {
-        this.newChannelName = e.target.value
+
+
+
+/* ------------------------------------------------------------
+                        Register                                
+------------------------------------------------------------ */
+
+function Login(props) {
+    return (
+        <div id="login">
+            <h3>LOG IN</h3>
+            <input type="text" name="email" placeholder="Email" onChange={props.onInputChange}/><br/>
+            <input 
+                type="password" name="password" placeholder="Password" 
+                onChange={props.onInputChange}
+            /><br/>
+            <button id="login-button" onClick={props.onSubmit}>Log in</button><br/>
+            <small>
+                Don't have an account? 
+                <button onClick={props.onSwitchToSignup}>SIGN UP</button>
+            </small>
+        </div>
+    );
+}
+
+function Signup(props) {
+    return (
+        <div id="signup">
+            <h3>CREATE AN ACCOUNT</h3>
+            <input type="text" name="email" placeholder="Email" onChange={props.onInputChange}/><br/>
+            <input 
+                type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
+                onChange={props.onInputChange}
+            /><br/>
+            <input 
+                type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
+                onChange={props.onInputChange}
+            /><br/>
+            <button id="signup-button" onClick={props.onSubmit}>Sign up</button><br/>
+            <small>
+                Already have an account? 
+                <button onClick={props.onSwitchToLogin}>LOG IN</button>
+            </small>
+        </div>
+    );
+}
+
+class Register extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            type: this.props.type,
+            fields: {},
+        }        
+        this.handleSwitchType = this.handleSwitchType.bind(this);
     }
-
-    createChannel() {
-        let name = this.newChannelName;
-        if (!name || !/^[a-z0-9_]+$/.test(name)) {
-            alert(`Invalid: ${name}`);
-            return;
-        }
-
-        fetch('/api/channel/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user: this.props.username, name: name})
-        }).then((response) => {
-            if (response.status == 200) {
-                response.json().then((data) => {
-                    console.log(data)
-                    this.newSessionChannelId = data.id
-                    this.createSession()
-                })
-            } else {
-                console.log(response.status);
-            }
-        }).catch((response) =>{
-            console.log(response);
-        })
-    }
-
-    createSession() {
-        fetch('/api/session/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user: this.props.username, channel_id: this.newSessionChannelId})
-        }).then((response) => {
-            if (response.status == 200) {
-                response.json().then((data) => {
-                    console.log(data)
-                    storage.setItem("isChat", true)
-                })
-            } else {
-                console.log(response.status);
-            }
-        }).catch((response) =>{
-            console.log(response);
-        })
-    }
-
-    switchToHome() {
-        storage.setItem("isChat", false)
+    
+    handleSwitchType() {
         this.setState({
-            channelId: '',
+            type: this.state.type === "login" ? "signup" : "login",
         })
+        let inputElements = document.querySelectorAll("#register input");
+        for (let i = 0; i < inputElements.length; i++) {
+            inputElements[i].value = '';
+        }
     }
-    switchToChat() {
-        storage.setItem("isChat", true)
+    
+    render() {
+        let register;
+        if (this.state.type === "login") {
+            register = (
+                <Login 
+                    onInputChange={this.props.handleInputChange}
+                    onSubmit={this.props.handleSubmitLogin}
+                    onSwitchToSignup={this.handleSwitchType}
+                />
+            );
+        } else {
+            register = (
+                <Signup
+                    onInputChange={this.props.handleInputChange}
+                    onSubmit={this.props.handleSubmitSignup}
+                    onSwitchToLogin={this.handleSwitchType}
+                />
+            );
+        }
+        return (
+            <div id="register" className="popup">
+                <div id="register-box" className="popup-box">{ register }</div>
+            </div>
+        );
     }
 }
 
 
 
 /* ------------------------------------------------------------
-                        App + Register                                
+                    App Controller                               
 ------------------------------------------------------------ */
-
-class Register extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            isLogin: (this.props.registerType==='login') ? true : false,
-        }
-        this.resetRegister = this.resetRegister.bind(this);
-        this.switchRegister =this.switchRegister.bind(this);
-    }
-    
-    render() {
-        return (
-            <div id="register" className="popup">
-                <div id="register-box" className="popup-box">
-                    <div id="login" style={{display: (this.state.isLogin ? "block" : "none")}}>
-                        <h3>LOG IN</h3>
-                        <input type="text" name="email" placeholder="Email" onChange={this.props.inputHandler}/><br/>
-                        <input 
-                            type="password" name="password" placeholder="Password" 
-                            onChange={this.props.inputHandler}
-                        /><br/>
-                        <button id="login-button" onClick={this.props.loginHandler}>Log in</button><br/>
-                        <small>
-                            Don't have an account? 
-                            <button onClick={this.switchRegister}>SIGN UP</button>
-                        </small>
-                    </div>
-                    <div id="signup" style={{display: (this.state.isLogin ? "none" : "block")}}>
-                        <h3>CREATE AN ACCOUNT</h3>
-                        <input type="text" name="email" placeholder="Email" onChange={this.props.inputHandler}/><br/>
-                        <input 
-                            type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
-                            onChange={this.props.inputHandler}
-                        /><br/>
-                        <input 
-                            type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
-                            onChange={this.props.inputHandler}
-                        /><br/>
-                        <button id="signup-button" onClick={this.props.signupHandler}>Sign up</button><br/>
-                        <small>
-                            Already have an account? 
-                            <button onClick={this.switchRegister}>LOG IN</button>
-                        </small>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
-    resetRegister() {
-        let inputElements = document.querySelectorAll("#register input");
-        for (let i = 0; i < inputElements.length; i++) {
-            inputElements[i].value = '';
-        }
-    }
-
-    switchRegister() {
-        this.setState({
-            isLogin: !this.state.isLogin,
-        })
-        this.resetRegister();
-    }
-}
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: storage.getItem('username') ? storage.getItem('username') : '',
+            username: window.localStorage.username,
         }
-
-        this.registerFields = {};
-        this.inputHandler = this.handleInput.bind(this);
-        this.loginHandler = this.handleLogin.bind(this);
-        this.signupHandler = this.handleSignup.bind(this);
-        this.logoutHandler = this.handleLogout.bind(this);
+        this.registerFields = {}
+        this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleSubmitLogin = this.handleSubmitLogin.bind(this);
+        this.handleSubmitSignup = this.handleSubmitSignup.bind(this);
     }
 
-    render() {
-        return (
-            <div id="app">
-                <Panel
-                    username={this.state.username}
-                    logoutHandler={this.logoutHandler}
-                />
-                {!this.state.username && 
-                    <Register 
-                        registerType="login"
-                        inputHandler={this.inputHandler}
-                        loginHandler={this.loginHandler}
-                        signupHandler={this.signupHandler}
-                    />
-                }
-            </div>
-        )
-    }
-
-    handleInput(e) {
+    handleInputChange(e) {
         let field = e.target.name;
         let value = e.target.value;
         this.registerFields[field] = value;
     }
-    handleLogin() {
+    handleSubmitLogin() {
         let email = this.registerFields.email;
         let password = this.registerFields.password;
 
@@ -388,8 +244,8 @@ class App extends React.Component {
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
+                    window.localStorage.setItem('username', data.username)
                     this.setState({username: data.username})
-                    storage.setItem('username', data.username)
                 });
             } else {
                 console.log(response.status);
@@ -398,10 +254,10 @@ class App extends React.Component {
             console.log(response);
         })
     }
-    handleSignup() {
-        let email = this.registerFields.email;
-        let username = this.registerFields.username;
-        let password = this.registerFields.password;
+    handleSubmitSignup() {
+        let email = this.state.fields.email;
+        let username = this.state.fields.username;
+        let password = this.state.fields.password;
 
         if ((!email || !/.+@\w+(\.\w+)+$/.test(email)) || !username || (!password || password.length < 8)) {
             alert("Please check your inputs.")
@@ -415,10 +271,8 @@ class App extends React.Component {
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
-                    console.log(data)
+                    window.localStorage.setItem('username', data.username)
                     this.setState({username: data.username})
-                    storage.setItem('username', data.username)
-                    storage.setItem('userChannels', [])
                 });
             } else {
                 console.log(response.status);
@@ -427,10 +281,23 @@ class App extends React.Component {
             console.log(response);
         })
     }
-    handleLogout() {
-        this.setState({username: null})
-        storage.clear()
+
+    render() {
+        return (
+            <div id="app">
+                <Panel username={this.state.username}/>
+                {!this.state.username && 
+                    <Register 
+                        type="login"
+                        handleInputChange={this.handleInputChange}
+                        handleSubmitLogin={this.handleSubmitLogin}
+                        handleSubmitSignup={this.handleSubmitSignup}
+                    />
+                }
+            </div>
+        );
     }
 }
 
-ReactDOM.render(<App />, document.getElementById('root'))
+
+ReactDOM.render(<App />, document.getElementById('root'));

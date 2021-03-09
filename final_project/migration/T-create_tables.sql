@@ -23,12 +23,15 @@ CREATE TABLE IF NOT EXISTS session (
     FOREIGN KEY (user)      REFERENCES user(username)
 );
 
-create table message {
-    channel INT,
-    message_id INT AUTO_INCREMENT,
-    sender INT,
-    content TEXT, 
-    PRIMARY KEY (channel_id, message_id),
-    FOREIGN KEY (channel) REFERENCES channel(channel_id),
-    FOREIGN KEY (sender) REFERENCES user(user_id)
-} ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS message (
+    channel     INT,
+    id          INT             AUTO_INCREMENT,
+    user        VARCHAR(40)     NOT NULL,
+    content     TEXT            NOT NULL,
+    reply       INT,
+    create_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (channel, id),
+    FOREIGN KEY (channel)   REFERENCES channel(id),
+    FOREIGN KEY (user)      REFERENCES user(username),
+    FOREIGN KEY (reply)     REFERENCES message(id)
+) ENGINE=MyISAM;

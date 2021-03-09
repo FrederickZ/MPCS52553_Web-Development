@@ -50,7 +50,22 @@ def login():
         cur.execute(query, (email,))
         username, encrypted_password = cur.fetchone()
         if bcrypt.checkpw((password+PEPPER).encode('utf-8'), encrypted_password.encode('utf-8')):
-            return {"username": username}
+            query = """
+            SELECT channel, name, token, create_at 
+            FROM channel JOIN session ON channel.id = session.channel
+            WHERE user = %s
+            """
+            cur.execute(query, (username, ))
+            user_channels = []
+            for channel in cur.fetchall():
+                id, name, token, create_at = channel
+                user_channels.append({
+                    'id': id, 
+                    'name': name, 
+                    'token': token, 
+                    'create_at': create_at
+                })
+            return {"channels": user_channels}
         return {}, 404
     except Exception as e:
         print(e)
@@ -76,10 +91,10 @@ def signup():
     try:
         cur.execute(query, (username, email, encrypted_password))
         conn.commit()
-        return {"username": username}
+        return {}
     except Exception as e:
         print(e)
-        return {"username": username}, 302
+        return {}, 302
     finally:
         cur.close()
         conn.close()
@@ -188,3 +203,60 @@ def create_session():
     finally:
         cur.close()
         conn.close()
+
+@app.route('/api/message', methods=['GET'])
+def get_message():
+    channel = request.args.get("channel_id", type=int)
+    message = request.args.get("message_id", type=int)
+
+    if channel == None:
+        return {}, 302
+
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+
+    try:
+        if message == None:
+            query = """
+            SELECT id, user, content, reply, create_at FROM message 
+            WHERE channel = %s
+            """
+            cur.execute(query, (channel, ))
+            messages = []
+            replies = {}
+            for message in cur.fetchall():
+                id, user, content, reply, create_at = message
+                if reply == None:
+                    messages.append({
+                        'id': id,
+                        'user': user,
+                        'content': content,
+                        'createAt': create_at
+                    })
+                else:
+                    if replies.get(reply) == None:
+                        replies[reply] = []
+                    replies[reply].append({
+                        'id': id,
+                        'user': user,
+                        'content': content,
+                        'createAt': create_at
+                    })
+            return {"messages": messages, 'replies': replies}
+        else:  # message != None
+            pass
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()
+
+@app.route('/api/message/post', methods=['POST'])
+def post_message():
+    pass
+
+
+@app.route('/api/message/reply', methods=['POST'])
+def reply_message():
+    pass
