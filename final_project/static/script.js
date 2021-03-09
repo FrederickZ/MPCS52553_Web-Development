@@ -1,4 +1,7 @@
 const storage = window.localStorage;
+if (storage.getItem('isChat') == null) {
+    storage.setItem('isChat', false)
+}
 
 /* ------------------------------------------------------------
                           Chat                                
@@ -63,16 +66,14 @@ class Home extends React.Component {
         );
         return (
             <div id="home">
-                <div>
-                    <input 
-                        type="text" name="new-channel" maxLength="40" onChange={this.props.inputHandler}
+                <div id="channels-list">
+                    {channel_blocks}
+                </div>
+                <div id="create-channel-div">
+                    <input id= "new-channel-input" type="text" maxLength="40" onChange={this.props.inputHandler}
                         placeholder="Channel name (1-9, a-z, and '_' only; 1-40 characters)"
                     />
-                    <button onClick={this.props.channelCreator} >CREATE</button>
-                </div>
-                <div id="channels-list">
-                    <p>channels list</p>
-                    <div>{channel_blocks}</div>
+                    <button id="create-channel-btn" onClick={this.props.channelCreator}>CREATE</button>
                 </div>
             </div>
         );
@@ -85,7 +86,7 @@ class UI extends React.Component {
     }
 
     render() {
-        if (this.props.isChat) {
+        if (storage.getItem('isChat') == true) {
             return <Chat username={this.props.username}/>
         } else {
             return <Home 
@@ -170,7 +171,6 @@ class Panel extends React.Component {
         this.state = {
             allChannels: [],
             userChannels: [],
-            isChat: false,
         }
 
         this.newChannelName = '';
@@ -192,7 +192,6 @@ class Panel extends React.Component {
                 />
                 <div id="ui">
                     <UI 
-                        isChat={this.state.isChat}
                         username={this.props.username} 
                         allChannelsGetter={this.allChannelsGetter}
                         chatSwitcher={this.chatSwitcher}
@@ -244,7 +243,7 @@ class Panel extends React.Component {
             if (response.status == 200) {
                 response.json().then((data) => {
                     console.log(data)
-                    this.setState({isChat: true})
+                    storage.setItem("isChat", true)
                 })
             } else {
                 console.log(response.status);
@@ -255,15 +254,13 @@ class Panel extends React.Component {
     }
 
     switchToHome() {
+        storage.setItem("isChat", false)
         this.setState({
-            isChat: false,
             channelId: '',
         })
     }
     switchToChat() {
-        this.setState({
-            isChat: true,
-        })
+        storage.setItem("isChat", true)
     }
 }
 
@@ -421,7 +418,7 @@ class App extends React.Component {
                     console.log(data)
                     this.setState({username: data.username})
                     storage.setItem('username', data.username)
-
+                    storage.setItem('userChannels', [])
                 });
             } else {
                 console.log(response.status);

@@ -52,12 +52,33 @@ body {
 #ui {
     height: 100%;
 }
-
+#home {
+    height: 100%;
+}
+#create-channel-div {
+    position: absolute;
+    bottom: 0;
+    height: 60px;
+    display: grid;
+    grid-template-columns: auto 100px;
+}
+#new-channel-input {
+    height: 56px;
+    width: 100%;
+    border: none;
+}
+#create-channel-btn {
+    height: 60px;
+    width: 100px;
+    border: none;
+}
+#channels-list {
+    width: 100%
+}
 .channel-block {
     height: 60px;
     width: 100%;
-    color: white;
-    background-color: rgb(64, 32, 64);
+    background-color: rgb(204, 200, 184);
 }
 
 
