@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS user (
 
 CREATE TABLE IF NOT EXISTS channel (
     id         INT             AUTO_INCREMENT,
-    name       VARCHAR(80)     NOT NULL UNIQUE,
+    name       VARCHAR(60)     NOT NULL UNIQUE,
     host       VARCHAR(40)     NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (host)      REFERENCES user(username)

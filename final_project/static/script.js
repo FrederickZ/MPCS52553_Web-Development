@@ -56,18 +56,17 @@ class Home extends React.Component {
 
     render() {
         const channel_blocks = this.state.channels.map(item => 
-            <div key={item.id}>
+            <div key={item.id} className="channel-block">
                 <h4>{item.name}</h4>
                 <small>Host: {item.host}</small>
             </div>
         );
         return (
             <div id="home">
-                <h1>Welcome to Belay!</h1>
                 <div>
                     <input 
-                        type="text" name="new-channel" maxLength="80" onChange={this.props.inputHandler}
-                        placeholder="Channel name (1-9, a-z, and '_' only; 1-80 characters)"
+                        type="text" name="new-channel" maxLength="40" onChange={this.props.inputHandler}
+                        placeholder="Channel name (1-9, a-z, and '_' only; 1-40 characters)"
                     />
                     <button onClick={this.props.channelCreator} >CREATE</button>
                 </div>
@@ -142,7 +141,10 @@ class Nav extends React.Component {
         );
         return (
             <div id="nav">
-                <p>channels nav</p>
+                <div id="logo">
+                    <h1>BELAY</h1>
+                    <small>1.0.0</small>
+                </div>
                 <div>{channel_tabs}</div>
                 <button id="back-home" onClick={this.props.homeSwitcher}><i className="material-icons">add</i></button>
                 {this.props.username && 
@@ -419,6 +421,7 @@ class App extends React.Component {
                     console.log(data)
                     this.setState({username: data.username})
                     storage.setItem('username', data.username)
+
                 });
             } else {
                 console.log(response.status);
@@ -429,7 +432,7 @@ class App extends React.Component {
     }
     handleLogout() {
         this.setState({username: null})
-        storage.removeItem('username')
+        storage.clear()
     }
 }
 
