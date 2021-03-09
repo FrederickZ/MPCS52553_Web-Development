@@ -1,5 +1,13 @@
 
-class Screen extends React.Component {}
+class Screen extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (<div id="screen"></div>)
+    }
+}
 
 
 
@@ -42,7 +50,7 @@ class ChannelTabsBar extends React.Component {
 function Profile(props) {
     return (
         <div id="profile">
-            <p>Hi, {storage.username}</p>
+            <p>Hi, {window.localStorage.username}</p>
             <button variant="light"><i className="material-icons">settings</i></button>
             <button variant="light" onClick={props.onClickLogout}><i className="material-icons">logout</i></button>
         </div>
@@ -50,6 +58,9 @@ function Profile(props) {
 }
 
 class Nav extends React.Component {
+    constructor(props) {
+        super(props);
+    }
     render() {
         return (
             <div id="nav">
@@ -57,7 +68,9 @@ class Nav extends React.Component {
                     userChannelsGetter={this.getUserChannels}
                 />
                 <button variant="light"><i className="material-icons">add</i></button>
-                <Profile onClickLogout={this.props.handleLogout}/>
+                <Profile 
+                    onClickLogout={this.props.handleLogout}
+                />
             </div>
         );
     }
@@ -66,25 +79,32 @@ class Nav extends React.Component {
 class Navbar extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            userChannels: []
-        }
+
+        this.handleClickBackHome = this.handleClickBackHome.bind(this)
+        this.handleClickLogout = this.handleClickLogout.bind(this)
     }
 
-    
-    
+    handleClickLogout() {
+        this.props.handleBackHome();
+        this.props.handleLogout();
+    }
+    handleClickBackHome() {
+        this.props.handleBackHome();
+    }
+
     render() {
         return (
             <div id="navbar">
                 <Logo />
-                {this.props.username && <Nav />}
+                {this.props.username && 
+                    <Nav 
+                        username={this.props.username}
+                        channelId={this.props.channelId}
+                    />}
             </div>
         )
     };
 }
-
-
-
 
 /* ------------------------------------------------------------
                     Panel Controller                                
@@ -93,19 +113,37 @@ class Navbar extends React.Component {
 class Panel extends React.Component {
     constructor(props) {
         super(props)
-
-        this.handleLogout = this.handleLogout.bind(this);
+        this.state = {
+            channelId: window.sessionStorage.channelId,
+            userChannels: []
+        }
+        this.handleBackHome = this.handleBackHome.bind(this);
+        this.handleSwitchChannel = this.handleSwitchChannel.bind(this);
     }
 
-    handleLogout() {
-        storage.clear();
+    handleBackHome() {
+        window.sessionStorage.clear()
+        this.setState({channelId: 0})
     }
+    handleSwitchChannel(e) {
+        this.setState({channelId: e.target.key});
+    }
+    handleEnterChannel() {}
 
     render() {
         return (
             <div id="panel">
-                <Navbar handleLogout={this.props.handleLogout}/>
-                {this.props.username && <Screen />}
+                <Navbar 
+                    username={this.props.username}
+                    handleLogout={this.props.handleLogout}
+                    handleBackHome={this.handleBackHome}
+                />
+                {this.props.username && 
+                    <Screen 
+                        username={this.props.username}
+                        channelId={this.state.channelId}
+                    />
+                }
             </div>
         );
     }
@@ -127,7 +165,7 @@ function Login(props) {
                 type="password" name="password" placeholder="Password" 
                 onChange={props.onInputChange}
             /><br/>
-            <button id="login-button" onClick={props.onSubmit}>Log in</button><br/>
+            <button id="login-button" onClick={props.onLogin}>Log in</button><br/>
             <small>
                 Don't have an account? 
                 <button onClick={props.onSwitchToSignup}>SIGN UP</button>
@@ -149,7 +187,7 @@ function Signup(props) {
                 type="password" name="password" placeholder="Password (8-20 characters)" maxLength="20"
                 onChange={props.onInputChange}
             /><br/>
-            <button id="signup-button" onClick={props.onSubmit}>Sign up</button><br/>
+            <button id="signup-button" onClick={props.onSignup}>Sign up</button><br/>
             <small>
                 Already have an account? 
                 <button onClick={props.onSwitchToLogin}>LOG IN</button>
@@ -158,12 +196,11 @@ function Signup(props) {
     );
 }
 
-class Register extends React.Component {
+class Register extends React.Component { 
     constructor(props) {
         super(props);
         this.state = {
             type: this.props.type,
-            fields: {},
         }        
         this.handleSwitchType = this.handleSwitchType.bind(this);
     }
@@ -184,7 +221,7 @@ class Register extends React.Component {
             register = (
                 <Login 
                     onInputChange={this.props.handleInputChange}
-                    onSubmit={this.props.handleSubmitLogin}
+                    onLogin={this.props.handleLogin}
                     onSwitchToSignup={this.handleSwitchType}
                 />
             );
@@ -192,7 +229,7 @@ class Register extends React.Component {
             register = (
                 <Signup
                     onInputChange={this.props.handleInputChange}
-                    onSubmit={this.props.handleSubmitSignup}
+                    onSignup={this.props.handleSignup}
                     onSwitchToLogin={this.handleSwitchType}
                 />
             );
@@ -216,11 +253,16 @@ class App extends React.Component {
         super(props);
         this.state = {
             username: window.localStorage.username,
+            userChannels: []
         }
-        this.registerFields = {}
+
+        this.registerFields = {};
+
         this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleSubmitLogin = this.handleSubmitLogin.bind(this);
-        this.handleSubmitSignup = this.handleSubmitSignup.bind(this);
+        this.handleLogin = this.handleLogin.bind(this);
+        this.handleSignup = this.handleSignup.bind(this);
+        this.handleLogout = this.handleLogout.bind(this);
+        this.getUserChannels = this.getUserChannels.bind(this);
     }
 
     handleInputChange(e) {
@@ -228,7 +270,7 @@ class App extends React.Component {
         let value = e.target.value;
         this.registerFields[field] = value;
     }
-    handleSubmitLogin() {
+    handleLogin() {
         let email = this.registerFields.email;
         let password = this.registerFields.password;
 
@@ -245,19 +287,24 @@ class App extends React.Component {
             if (response.status == 200) {
                 response.json().then((data) => {
                     window.localStorage.setItem('username', data.username)
-                    this.setState({username: data.username})
+                    this.setState({
+                        username: data.username
+                    })
+                    this.getUserChannels();
                 });
             } else {
-                console.log(response.status);
+                response.json().then((data) => {
+                    alert(data.error);
+                })
             }
         }).catch((response) =>{
             console.log(response);
         })
     }
-    handleSubmitSignup() {
-        let email = this.state.fields.email;
-        let username = this.state.fields.username;
-        let password = this.state.fields.password;
+    handleSignup() {
+        let email = this.registerFields.email;
+        let username = this.registerFields.username;
+        let password = this.registerFields.password;
 
         if ((!email || !/.+@\w+(\.\w+)+$/.test(email)) || !username || (!password || password.length < 8)) {
             alert("Please check your inputs.")
@@ -275,6 +322,35 @@ class App extends React.Component {
                     this.setState({username: data.username})
                 });
             } else {
+                response.json().then((data) => {
+                    alert(data.error);
+                })
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
+    }
+    handleLogout() {
+        window.localStorage.clear();
+        this.setState({username: ''});
+    }
+    getUserChannels() {
+        let username = this.state.username;
+        if (!username) {
+            alert("user not logged in.")
+            return;
+        }
+        fetch(`/api/channel?user=${username}`, {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    this.setState({
+                        userChannels: data.channels,
+                    })
+                })
+            } else {
                 console.log(response.status);
             }
         }).catch((response) =>{
@@ -285,13 +361,17 @@ class App extends React.Component {
     render() {
         return (
             <div id="app">
-                <Panel username={this.state.username}/>
+                <Panel 
+                    username={this.state.username}
+                    handleLogout={this.handleLogout}
+                    userChannels={this.userChannels}
+                />
                 {!this.state.username && 
                     <Register 
                         type="login"
                         handleInputChange={this.handleInputChange}
-                        handleSubmitLogin={this.handleSubmitLogin}
-                        handleSubmitSignup={this.handleSubmitSignup}
+                        handleLogin={this.handleLogin}
+                        handleSignup={this.handleSignup}
                     />
                 }
             </div>

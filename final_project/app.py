@@ -48,7 +48,10 @@ def login():
 
     try:
         cur.execute(query, (email,))
-        username, encrypted_password = cur.fetchone()
+        try:
+            username, encrypted_password = cur.fetchone()
+        except Exception as e:
+            return {"error": "User not found."}, 404
         if bcrypt.checkpw((password+PEPPER).encode('utf-8'), encrypted_password.encode('utf-8')):
             query = """
             SELECT channel, name, token, create_at 
@@ -65,11 +68,13 @@ def login():
                     'token': token, 
                     'create_at': create_at
                 })
-            return {"channels": user_channels}
-        return {}, 404
+            return {
+                "username": username, 
+                "channels": user_channels
+            }
+        return {"error": "Password not matched."}, 404
     except Exception as e:
-        print(e)
-        return {}, 404
+        return {"error": e}, 404
     finally:
         cur.close()
         conn.close()
@@ -91,10 +96,9 @@ def signup():
     try:
         cur.execute(query, (username, email, encrypted_password))
         conn.commit()
-        return {}
+        return {"username": username}
     except Exception as e:
-        print(e)
-        return {}, 302
+        return {"error": e}, 302
     finally:
         cur.close()
         conn.close()
@@ -206,22 +210,22 @@ def create_session():
 
 @app.route('/api/message', methods=['GET'])
 def get_message():
-    channel = request.args.get("channel_id", type=int)
-    message = request.args.get("message_id", type=int)
+    channel_id = request.args.get("channel_id", type=int)
+    message_id = request.args.get("message_id", type=int)
 
-    if channel == None:
+    if channel_id == None:
         return {}, 302
 
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
 
     try:
-        if message == None:
+        if message_id == None:
             query = """
             SELECT id, user, content, reply, create_at FROM message 
             WHERE channel = %s
             """
-            cur.execute(query, (channel, ))
+            cur.execute(query, (channel_id, ))
             messages = []
             replies = {}
             for message in cur.fetchall():
@@ -243,7 +247,7 @@ def get_message():
                         'createAt': create_at
                     })
             return {"messages": messages, 'replies': replies}
-        else:  # message != None
+        else:  # message_id != None
             pass
     except Exception as e:
         print(e)
