@@ -30,7 +30,7 @@ class MessagesBox extends React.Component {
     }
 }
 
-class Chat extends React.Component {
+class Channel extends React.Component {
     constructor(props) {
         super(props)
     }
@@ -42,7 +42,7 @@ class Chat extends React.Component {
 
     render() {
         return (
-            <div id="chat">
+            <div id="channel">
                 <MessagesBox />
                 <div id="new-message">
                     <input 
@@ -67,16 +67,16 @@ class Chat extends React.Component {
 
 function ChannelBlock(props) {
     return (
-        <div id={"block-"+props.channel.channel} onClick={props.onClickChannelBlock}>
-            {props.channel.channel}
+        <div id={props.channel.name} onClick={props.onClickChannelBlock}>
+            {props.channel.name}
         </div>
     )
 }
 
 function ChannelBlocksBar(props) {
-    const channelBlocks = props.channels.map(item => 
+    const channelBlocks = props.allChannels.map(item => 
         <ChannelBlock 
-            key={item.channel}
+            key={item.name}
             channel={item}
             onClickChannelBlock={props.handleClickChannelBlock}
         />
@@ -90,7 +90,7 @@ class Home extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            channels: []
+            allChannels: []
         }
 
         this.getAllChannels = this.getAllChannels.bind(this)
@@ -107,7 +107,7 @@ class Home extends React.Component {
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
-                    this.setState({channels: data.channels});
+                    this.setState({allChannels: data.channels});
                 })
             } else {
                 console.log(response.status);
@@ -122,7 +122,7 @@ class Home extends React.Component {
             <div id="home">
                 <p>search bar</p>
                 <ChannelBlocksBar 
-                    channels={this.state.channels}
+                    allChannels={this.state.allChannels}
                     handleClickChannelBlock={this.props.handleCreateSession}
                 />
                 <div id="create-channel">
@@ -149,7 +149,7 @@ class Screen extends React.Component {
 
     render() {
         let screen;
-        if (!this.props.channel) {
+        if (!this.props.token) {
             screen = (
                 <Home 
                     onInputChange={this.props.handleInputChange}
@@ -159,7 +159,7 @@ class Screen extends React.Component {
             );
         } else {
             screen = (
-                <Chat />
+                <Channel />
             );
         }
         return (
@@ -184,7 +184,7 @@ function Logo(props) {
     );
 }
 
-class ChannelTab extends React.Component {
+class SessionTab extends React.Component {
     constructor(props) {
         super(props);
     }
@@ -196,29 +196,29 @@ class ChannelTab extends React.Component {
 
     render() {
         return (
-            <div id={'tab-'+this.props.channel.channel} className="channel-tab" onClick={this.props.onClickChannelTab}>
-                {this.props.channel.channel}
+            <div id={this.props.session.token} className="session-tab" onClick={this.props.onClickSessionTab}>
+                {this.props.session.channel}
             </div>
         );
     }
 }
 
-class ChannelTabsBar extends React.Component {
+class SessionTabsBar extends React.Component {
     constructor(props) {
         super(props);
     }
 
     render() {
-        const channelTabs = this.props.userChannels.map(item => 
-            <ChannelTab 
+        const sessionTabs = this.props.userSessions.map(item => 
+            <SessionTab 
                 key={item.token}
-                channel={item}
-                onClickChannelTab={this.props.handleClickChannelTab}
+                session={item}
+                onClickSessionTab={this.props.handleClickSessionTab}
             />
         );
         return (
-            <div id="channel-tabs-bar">
-                {channelTabs}
+            <div id="session-tabs-bar">
+                {sessionTabs}
             </div>
         )
     }
@@ -241,15 +241,15 @@ class Nav extends React.Component {
     }
 
     componentDidMount() {
-        this.props.getUserChannels();
+        this.props.getUserSessions();
     }
 
     render() {
         return (
             <div id="nav">
-                <ChannelTabsBar 
-                    userChannels={this.props.userChannels}
-                    handleClickChannelTab={this.props.handleSwitchChannel}
+                <SessionTabsBar 
+                    userSessions={this.props.userSessions}
+                    handleClickSessionTab={this.props.handleSwitchSession}
                 />
                 <button variant="light" onClick={this.props.onClickBackHome}><i className="material-icons">add</i></button>
                 <Profile
@@ -280,11 +280,11 @@ class Navbar extends React.Component {
                 {this.props.username && 
                     <Nav 
                         username={this.props.username}
-                        userChannels={this.props.userChannels}
+                        userSessions={this.props.userSessions}
                         onClickBackHome={this.props.handleBackHome}
                         handleClickLogout={this.handleClickLogout}
-                        handleSwitchChannel={this.props.handleSwitchChannel}
-                        getUserChannels={this.props.getUserChannels}
+                        handleSwitchSession={this.props.handleSwitchSession}
+                        getUserSessions={this.props.getUserSessions}
                     />
                 }
             </div>
@@ -300,59 +300,55 @@ class Panel extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            channel: window.sessionStorage.channel,
-            userChannels: [],
+            token: window.sessionStorage.token,
+            userSessions: [],
         }
 
-        this.getUserChannels = this.getUserChannels.bind(this);
-        this.handleSwitchChannel = this.handleSwitchChannel.bind(this);
+        this.getUserSessions = this.getUserSessions.bind(this);
+        this.handleSwitchSession = this.handleSwitchSession.bind(this);
 
         this.handleBackHome = this.handleBackHome.bind(this);
 
-        this.newChannel = ''
+        this.newChannelName = ''
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleCreateChannel = this.handleCreateChannel.bind(this);
-        this.handleCreateSession = this.handleCreateSession.bind(this);
 
-        
-        
-        
-        
+        this.handleCreateSession = this.handleCreateSession.bind(this);
+        this.handleUpdateSessionTimestamp = this.handleUpdateSessionTimestamp.bind(this);
     }
 
     handleBackHome() {
         window.sessionStorage.clear()
-        this.setState({channel: ''})
+        this.setState({token: ''})
     }
-    handleSwitchChannel(e) {
-        let channel = e.target.id.substring(4);
-        console.log(e.target)
-        window.sessionStorage.setItem("channel", channel)
-        this.setState({channel: channel});
+    handleSwitchSession(e) {
+        let token = e.target.id.substring(4);
+        window.sessionStorage.setItem("token", token)
+        this.setState({token: token});
+        this.handleUpdateSessionTimestamp();
     }
     handleInputChange(e) {
-        this.newChannel = e.target.value;
+        this.newChannelName = e.target.value;
     }
     handleCreateChannel() {
-        const userChannels = this.state.userChannels.slice();
-        let channel = this.newChannel;
-        if (!channel || !/^[a-z0-9_]+$/.test(channel)) {
-            alert(`Invalid channel name: ${channel}`);
+        const userSessions = this.state.userSessions.slice();
+        let channelName = this.newChannelName;
+        if (!channelName || !/^[aa-z0-9_]+$/.test(channelName)) {
+            alert(`Invalid channel name: ${channelName}`);
             return;
         }
 
         fetch('/api/channel/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user: this.props.username, channel: channel})
+            body: JSON.stringify({user: this.props.username, name: channelName})
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
-                    console.log(data)
-                    window.sessionStorage.setItem("channel", data.channel);
+                    window.sessionStorage.setItem("token", data.token);
                     this.setState({
-                        channel: data.channel,
-                        userChannels: userChannels.concat([data])
+                        token: data.token,
+                        userSessions: userSessions.concat([data])
                     })
                 })
             } else {
@@ -365,16 +361,17 @@ class Panel extends React.Component {
         })
     }
     handleCreateSession(e) {
-        let channel = e.target.id.substring(6);
-        for (let i = 0; i < this.state.userChannels.length; i++) {
-            if (channel === this.state.userChannels[i].channel) {
-                window.sessionStorage.setItem("channel", channel)
-                this.setState({channel: channel});
+        const userSessions = this.state.userSessions.slice();
+        let channel = e.target.id;
+        for (let i = 0; i < userSessions.length; i++) {
+            if (channel === userSessions[i].channel) {
+                window.sessionStorage.setItem("token", userSessions[i].token)
+                this.setState({token: userSessions[i].token});
+                this.handleUpdateSessionTimestamp();
                 return;
             }
         }
 
-        const userChannels = this.state.userChannels.slice();
         fetch('/api/session/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -383,16 +380,10 @@ class Panel extends React.Component {
             if (response.status == 200) {
                 response.json().then((data) => {
                     console.log(data)
-                    window.sessionStorage.setItem("channel", data.channel);
+                    window.sessionStorage.setItem("token", data.token);
                     this.setState({
-                        channel: data.channel,
-                        userChannels: userChannels.concat([{
-                            channel: data.channel,
-                            token: data.token,
-                            isHost: data.isHost,
-                            createAt: data.createAt,
-                            lastActive: data.lastActive
-                        }])
+                        token: data.token,
+                        userSessions: userSessions.concat([data])
                     })
                 })
             } else {
@@ -404,16 +395,48 @@ class Panel extends React.Component {
             console.log(response);
         })
     }
+    handleUpdateSessionTimestamp() {
+        const userSessions = this.state.userSessions.slice()
+        let token = this.state.token;
+        let index;
+        for (let i = 0; i < userSessions.length; i++) {
+            if (userSessions[i].token === token) {
+                index = i
+                break;
+            }
+        }
+        fetch('/api/session/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application.json'},
+            body: JSON.stringify({token: token})
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    let lastActive = data.lastActive;
+                    userSessions[index].lastActive = lastActive;
+                    this.setState({
+                        userSessions: userSessions
+                    })
+                })
+            } else {
+                response.json().then((data) => {
+                    alert(data.error);
+                })
+            }
+        }).catch((response) => {
+            console.log(response);
+        })
+    }
 
-    getUserChannels() {
-        fetch(`/api/channel?user=${this.props.username}`, {
+    getUserSessions() {
+        fetch(`/api/session?user=${this.props.username}`, {
             method: 'GET',
             headers: {'Content-Type': 'application/json'},
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
                     this.setState({
-                        userChannels: data.channels
+                        userSessions: data.sessions
                     })
                 });
             } else {
@@ -430,19 +453,19 @@ class Panel extends React.Component {
         return (
             <div id="panel">
                 <Navbar 
-                    getUserChannels={this.getUserChannels}
+                    getUserSessions={this.getUserSessions}
 
                     username={this.props.username}
-                    userChannels={this.state.userChannels}
+                    userSessions={this.state.userSessions}
                     handleLogout={this.props.handleLogout}
-                    handleSwitchChannel={this.handleSwitchChannel}
+                    handleSwitchSession={this.handleSwitchSession}
                     handleBackHome={this.handleBackHome}
                     
                 />
                 {this.props.username && 
                     <Screen 
                         username={this.props.username}
-                        channel={this.state.channel}
+                        token={this.state.token}
                         handleInputChange={this.handleInputChange}
                         handleCreateChannel={this.handleCreateChannel}
                         handleCreateSession={this.handleCreateSession}
