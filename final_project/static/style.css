@@ -2,7 +2,6 @@ html {
     font-family: sans-serif;
 }
 body {
-    color: rgb(41, 45, 62);
     margin: 0;
 }
 
@@ -35,6 +34,12 @@ body {
     display: grid;
     grid-template-columns: 120px 80px;
     align-items: baseline;
+}
+.channel-tab {
+    height: 40px;
+    width: 100%;
+    background-color: rgb(41, 45, 62);
+    color: white
 }
 #profile {
     height: 40px;

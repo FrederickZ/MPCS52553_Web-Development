@@ -5,33 +5,26 @@ CREATE TABLE IF NOT EXISTS user (
     PRIMARY KEY (username)
 );
 
-CREATE TABLE IF NOT EXISTS channel (
-    id         INT             AUTO_INCREMENT,
-    name       VARCHAR(60)     NOT NULL UNIQUE,
-    host       VARCHAR(40)     NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (host)      REFERENCES user(username)
-);
-
 CREATE TABLE IF NOT EXISTS session (
     token       CHAR(16),
-    channel     INT             NOT NULL,
+    channel     VARCHAR(40)     NOT NULL,
     user        VARCHAR(40)     NOT NULL,
+    is_host     BOOLEAN         NOT NULL DEFAULT false,
     create_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_active TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (token),
-    FOREIGN KEY (channel)   REFERENCES channel(id),
-    FOREIGN KEY (user)      REFERENCES user(username)
+    FOREIGN KEY (user)          REFERENCES user(username),
+    UNIQUE KEY (channel, user)
 );
 
 CREATE TABLE IF NOT EXISTS message (
-    channel     INT,
+    channel     VARCHAR(40),
     id          INT             AUTO_INCREMENT,
     user        VARCHAR(40)     NOT NULL,
     content     TEXT            NOT NULL,
-    reply       INT,
-    create_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reply       INT             NOT NULL DEFAULT 0,
+    time        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (channel, id),
-    FOREIGN KEY (channel)   REFERENCES channel(id),
-    FOREIGN KEY (user)      REFERENCES user(username),
-    FOREIGN KEY (reply)     REFERENCES message(id)
+    FOREIGN KEY (channel, user) REFERENCES session(channel, user),
+    FOREIGN KEY (reply)         REFERENCES message(id)
 ) ENGINE=MyISAM;
