@@ -2,11 +2,57 @@
                             Chat         
 ------------------------------------------------------------ */
 
+class Message extends React.Component {
+    constructor(props) {
+        super(props);
+    }
 
+    render() {
+        return (
+            <div className="message">
+                message
+            </div>
+        );
+    }
+}
 
+class MessagesBox extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div id="messages-box">
+                messages box
+            </div>
+        )
+    }
+}
 
 class Chat extends React.Component {
-    render() {return null}
+    constructor(props) {
+        super(props)
+    }
+
+    componentDidMount() {
+        // polling new message number
+        return;
+    }
+
+    render() {
+        return (
+            <div id="chat">
+                <MessagesBox />
+                <div id="new-message">
+                    <input 
+                        type="text" name="new-message-content"
+                    />
+                    <button id="new-message-button">Send</button>
+                </div>
+            </div>
+        )
+    }
 }
 
 
@@ -19,22 +65,66 @@ class Chat extends React.Component {
 ------------------------------------------------------------ */
 
 
-function ChannelBlock(props) {}
+function ChannelBlock(props) {
+    return (
+        <div id={"block-"+props.channel.channel} onClick={props.onClickChannelBlock}>
+            {props.channel.channel}
+        </div>
+    )
+}
 
 function ChannelBlocksBar(props) {
-    return null
+    const channelBlocks = props.channels.map(item => 
+        <ChannelBlock 
+            key={item.channel}
+            channel={item}
+            onClickChannelBlock={props.handleClickChannelBlock}
+        />
+    );
+    return (
+        <div id="channel-blocks-bar">{ channelBlocks }</div>
+    )
 }
 
 class Home extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            channels: []
+        }
+
+        this.getAllChannels = this.getAllChannels.bind(this)
+    }
+
+    componentDidMount() {
+        this.getAllChannels();
+    }
+
+    getAllChannels() {
+        fetch("/api/channel", {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    this.setState({channels: data.channels});
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
     }
 
     render() {
         return (
             <div id="home">
                 <p>search bar</p>
-                <ChannelBlocksBar />
+                <ChannelBlocksBar 
+                    channels={this.state.channels}
+                    handleClickChannelBlock={this.props.handleCreateSession}
+                />
                 <div id="create-channel">
                     <input 
                         type="text" name="new-channel-name" placeholder="1-40 characters; a-z, 0-9, '_' only" 
@@ -64,6 +154,7 @@ class Screen extends React.Component {
                 <Home 
                     onInputChange={this.props.handleInputChange}
                     onCreateChannel={this.props.handleCreateChannel}
+                    handleCreateSession={this.props.handleCreateSession}
                 />
             );
         } else {
@@ -105,8 +196,8 @@ class ChannelTab extends React.Component {
 
     render() {
         return (
-            <div id={'tab-'+this.props.channel} className="channel-tab" onClick={this.props.onClickChannelTab}>
-                {this.props.channel}
+            <div id={'tab-'+this.props.channel.channel} className="channel-tab" onClick={this.props.onClickChannelTab}>
+                {this.props.channel.channel}
             </div>
         );
     }
@@ -118,11 +209,10 @@ class ChannelTabsBar extends React.Component {
     }
 
     render() {
-        console.log(this.props.userChannels)
         const channelTabs = this.props.userChannels.map(item => 
             <ChannelTab 
-                key={item.channel}
-                channel={item.channel}
+                key={item.token}
+                channel={item}
                 onClickChannelTab={this.props.handleClickChannelTab}
             />
         );
@@ -161,7 +251,7 @@ class Nav extends React.Component {
                     userChannels={this.props.userChannels}
                     handleClickChannelTab={this.props.handleSwitchChannel}
                 />
-                <button variant="light"><i className="material-icons">add</i></button>
+                <button variant="light" onClick={this.props.onClickBackHome}><i className="material-icons">add</i></button>
                 <Profile
                     username={this.props.username}
                     onClickLogout={this.props.handleClickLogout}
@@ -175,16 +265,12 @@ class Navbar extends React.Component {
     constructor(props) {
         super(props);
 
-        this.handleClickBackHome = this.handleClickBackHome.bind(this)
         this.handleClickLogout = this.handleClickLogout.bind(this)
     }
 
     handleClickLogout() {
         this.props.handleBackHome();
         this.props.handleLogout();
-    }
-    handleClickBackHome() {
-        this.props.handleBackHome();
     }
 
     render() {
@@ -195,6 +281,7 @@ class Navbar extends React.Component {
                     <Nav 
                         username={this.props.username}
                         userChannels={this.props.userChannels}
+                        onClickBackHome={this.props.handleBackHome}
                         handleClickLogout={this.handleClickLogout}
                         handleSwitchChannel={this.props.handleSwitchChannel}
                         getUserChannels={this.props.getUserChannels}
@@ -216,12 +303,21 @@ class Panel extends React.Component {
             channel: window.sessionStorage.channel,
             userChannels: [],
         }
-        this.newChannel = ''
-        this.handleBackHome = this.handleBackHome.bind(this);
+
+        this.getUserChannels = this.getUserChannels.bind(this);
         this.handleSwitchChannel = this.handleSwitchChannel.bind(this);
+
+        this.handleBackHome = this.handleBackHome.bind(this);
+
+        this.newChannel = ''
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleCreateChannel = this.handleCreateChannel.bind(this);
-        this.getUserChannels = this.getUserChannels.bind(this);
+        this.handleCreateSession = this.handleCreateSession.bind(this);
+
+        
+        
+        
+        
     }
 
     handleBackHome() {
@@ -233,10 +329,6 @@ class Panel extends React.Component {
         console.log(e.target)
         window.sessionStorage.setItem("channel", channel)
         this.setState({channel: channel});
-    }
-    handleEnterChannel() {
-        // api create session
-        // append userChannels
     }
     handleInputChange(e) {
         this.newChannel = e.target.value;
@@ -272,12 +364,21 @@ class Panel extends React.Component {
             console.log(response);
         })
     }
-    handleCreateSession() {
+    handleCreateSession(e) {
+        let channel = e.target.id.substring(6);
+        for (let i = 0; i < this.state.userChannels.length; i++) {
+            if (channel === this.state.userChannels[i].channel) {
+                window.sessionStorage.setItem("channel", channel)
+                this.setState({channel: channel});
+                return;
+            }
+        }
+
         const userChannels = this.state.userChannels.slice();
         fetch('/api/session/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user: this.props.username, channel: this.newChannel})
+            body: JSON.stringify({user: this.props.username, channel: channel})
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
@@ -329,12 +430,14 @@ class Panel extends React.Component {
         return (
             <div id="panel">
                 <Navbar 
+                    getUserChannels={this.getUserChannels}
+
                     username={this.props.username}
                     userChannels={this.state.userChannels}
                     handleLogout={this.props.handleLogout}
                     handleSwitchChannel={this.handleSwitchChannel}
                     handleBackHome={this.handleBackHome}
-                    getUserChannels={this.getUserChannels}
+                    
                 />
                 {this.props.username && 
                     <Screen 
@@ -342,6 +445,7 @@ class Panel extends React.Component {
                         channel={this.state.channel}
                         handleInputChange={this.handleInputChange}
                         handleCreateChannel={this.handleCreateChannel}
+                        handleCreateSession={this.handleCreateSession}
                     />
                 }
             </div>
@@ -425,7 +529,7 @@ class Register extends React.Component {
                     onSwitchToSignup={this.handleSwitchType}
                 />
             );
-        } else {
+        } else if (this.state.type === "signup"){
             register = (
                 <Signup
                     onInputChange={this.props.handleInputChange}
@@ -433,6 +537,8 @@ class Register extends React.Component {
                     onSwitchToLogin={this.handleSwitchType}
                 />
             );
+        } else {
+            // update
         }
         return (
             <div id="register" className="popup">
@@ -459,6 +565,7 @@ class App extends React.Component {
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleLogin = this.handleLogin.bind(this);
         this.handleSignup = this.handleSignup.bind(this);
+
         this.handleLogout = this.handleLogout.bind(this);
     }
 
