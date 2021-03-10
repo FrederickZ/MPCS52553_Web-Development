@@ -195,7 +195,6 @@ def get_session():
         cur.close()
         conn.close()
 
-
 @app.route('/api/session/create', methods=['POST'])
 def create_session():
     body = request.get_json()

@@ -322,7 +322,7 @@ class Panel extends React.Component {
         this.setState({token: ''})
     }
     handleSwitchSession(e) {
-        let token = e.target.id.substring(4);
+        let token = e.target.id;
         window.sessionStorage.setItem("token", token)
         this.setState({token: token});
         this.handleUpdateSessionTimestamp();
@@ -398,25 +398,25 @@ class Panel extends React.Component {
     handleUpdateSessionTimestamp() {
         const userSessions = this.state.userSessions.slice()
         let token = this.state.token;
-        let index;
-        for (let i = 0; i < userSessions.length; i++) {
-            if (userSessions[i].token === token) {
-                index = i
-                break;
-            }
-        }
+
         fetch('/api/session/update', {
             method: 'POST',
-            headers: {'Content-Type': 'application.json'},
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({token: token})
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
                     let lastActive = data.lastActive;
-                    userSessions[index].lastActive = lastActive;
+                    for (let i = 0; i < userSessions.length; i++) {
+                        if (userSessions[i].token === token) {
+                            userSessions[i].lastActive = lastActive;
+                            break;
+                        }
+                    }
                     this.setState({
                         userSessions: userSessions
                     })
+                    console.log(this.state.userSessions)
                 })
             } else {
                 response.json().then((data) => {
