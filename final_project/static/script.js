@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------
-                            Chat         
+                            Channel         
 ------------------------------------------------------------ */
 
 class Message extends React.Component {
@@ -251,7 +251,7 @@ class Nav extends React.Component {
                     userSessions={this.props.userSessions}
                     handleClickSessionTab={this.props.handleSwitchSession}
                 />
-                <button variant="light" onClick={this.props.onClickBackHome}><i className="material-icons">add</i></button>
+                <button id="back-home" variant="light" onClick={this.props.onClickBackHome}><i className="material-icons">add</i></button>
                 <Profile
                     username={this.props.username}
                     onClickLogout={this.props.handleClickLogout}

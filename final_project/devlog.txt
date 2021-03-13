@@ -1,0 +1,14 @@
+Bug:
+1. different users can create chat room using the same name
+2. stack overflow question
+
+
+
+
+
+Improve:
+1. change inputs to form
+2. componentDidMount cause api request twice
+3. eliminate event bubbling
+4. use separate table: channel, session
+5. error code

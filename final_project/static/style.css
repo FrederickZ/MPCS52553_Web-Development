@@ -5,41 +5,53 @@ body {
     margin: 0;
 }
 
-/* buttons */
-#back-home {
-    width: 100%;
-    height: 40px;
-    border: none;
+div {
+    height: 100%
 }
-
-
-#app {
+button {
+    border: none;
+    height: 40px;
+    margin: 0;
+    padding: auto;
+}
+input {
     height: 100%;
 }
+
+
 #panel {
     position: absolute;
     top: 0%;
     left: 0%;
     width: 100%;
-    height: 100%;
     display: grid;
     grid-template-columns: 200px auto;
 }
+
 #navbar {
-    height: 100%;
     background-color: rgb(51, 55, 71);
     color: white;
 }
 #logo {
+    height: 80px;
     display: grid;
     grid-template-columns: 120px 80px;
     align-items: baseline;
 }
-.channel-tab {
+
+#session-tabs-bar {
+    height: fit-content;
+}
+.session-tab {
     height: 40px;
     width: 100%;
     background-color: rgb(41, 45, 62);
-    color: white
+    color: white;
+    font-size: 18px;
+}
+#back-home {
+    height: 40px;
+    width: 100%;
 }
 #profile {
     height: 40px;
@@ -54,12 +66,7 @@ body {
     background: none;
     color: white
 }
-#ui {
-    height: 100%;
-}
-#home {
-    height: 100%;
-}
+
 #create-channel-div {
     position: absolute;
     bottom: 0;
@@ -85,7 +92,14 @@ body {
     width: 100%;
     background-color: rgb(204, 200, 184);
 }
-
+#new-message {
+    height: 40px;
+    position: absolute;
+    bottom: 0px;
+}
+#new-message-content {
+    height: 40px;
+}
 
 
 
