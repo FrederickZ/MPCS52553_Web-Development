@@ -92,24 +92,24 @@ def get_channel():
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
     query = """
-    SELECT channel, number, host, create_at FROM
-        (SELECT channel, COUNT(*) AS number FROM session
+    SELECT channel, members, host, create_at FROM
+        (SELECT channel, COUNT(*) AS members FROM session
         GROUP BY channel) AS channel 
         JOIN
         (SELECT channel, user AS host, create_at FROM session
         WHERE is_host = true) AS session_host 
         USING (channel)
-    ORDER BY number ASC, create_at ASC
+    ORDER BY members ASC, create_at ASC
     """
 
     try:
         cur.execute(query)
         channels = []
         for channel in cur.fetchall():
-            name, number, host, create_at = channel
+            name, members, host, create_at = channel
             channels.append({
                 'name': name, 
-                'number': number, 
+                'members': members, 
                 'host': host,
                 'createAt': create_at
             })
@@ -149,11 +149,14 @@ def create_channel():
         create_at, last_active = cur.fetchone()
 
         return {
-            'token': token,
-            'channel': channel,
-            'isHost': True, 
-            'createAt': create_at,
-            'lastActive': last_active
+            "session": {
+                channel: {
+                    'token': token,
+                    'isHost': True, 
+                    'createAt': create_at,
+                    'lastActive': last_active
+                }
+            }
         }
     except Exception as e:
         print(e)
@@ -177,16 +180,15 @@ def get_session():
 
     try:
         cur.execute(query, (user, ))
-        sessions = []
+        sessions = {}
         for session in cur.fetchall():
             token, channel, is_host, create_at, last_active = session
-            sessions.append({
+            sessions[channel] = {
                 'token': token,
-                'channel': channel,
                 'isHost': is_host, 
                 'createAt': create_at,
                 'lastActive': last_active
-            })
+            }
         return {"sessions": sessions}
     except Exception as e:
         print(e)
@@ -221,11 +223,14 @@ def create_session():
         create_at, last_active = cur.fetchone()
 
         return {
-            'token': token,
-            'channel': channel,
-            'isHost': False, 
-            'createAt': create_at,
-            'lastActive': last_active
+            "session": {
+                channel: {
+                    'token': token,
+                    'isHost': True, 
+                    'createAt': create_at,
+                    'lastActive': last_active
+                }
+            }
         }
     except Exception as e:
         print(e)
@@ -237,7 +242,6 @@ def create_session():
 @app.route('/api/session/update', methods=['POST'])
 def update_session():
     body = request.get_json()
-    print(body)
     token = body["token"]
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
@@ -251,8 +255,7 @@ def update_session():
         SELECT last_active FROM session WHERE token = %s
         """
         cur.execute(query, (token, ))
-        last_active = cur.fetchone()
-
+        last_active = cur.fetchone()[0]
         return {
             'lastActive': last_active
         }
@@ -263,56 +266,93 @@ def update_session():
         cur.close()
         conn.close()
 
-# @app.route('/api/message', methods=['GET'])
-# def get_message():
-#     channel_id = request.args.get("channel_id", type=int)
-#     message_id = request.args.get("message_id", type=int)
+def get_user_by_token(token, channel):
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = """
+    SELECT token, user FROM session WHERE channel = %s
+    """
+    try:
+        cur.execute(query, (channel, ))
+        for session in cur.fetchall():
+            if token == session[0]:
+                return session[1]
+        return None
+    except Exception as e:
+        print(e)
+        return None
+    finally:
+        cur.close()
+        conn.close()
 
-#     if channel_id == None:
-#         return {}, 302
+@app.route('/api/message/new', methods=['POST'])
+def post_message():
+    channel = request.args.get("channel")
+    body = request.get_json()
+    token, user, content = tuple(body.values());
+    token_user = get_user_by_token(token, channel)
+    if token_user == None or token_user != user:
+        return {}, 302
 
-#     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
-#     cur = conn.cursor()
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = """
+    INSERT INTO message (channel, user, content) VALUES (%s, %s, %s)
+    """
+    try:
+        cur.execute(query, (channel, user, content))
+        conn.commit()
+        return {}
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()
 
-#     try:
-#         if message_id == None:
-#             query = """
-#             SELECT id, user, content, reply, create_at FROM message 
-#             WHERE channel = %s
-#             """
-#             cur.execute(query, (channel_id, ))
-#             messages = []
-#             replies = {}
-#             for message in cur.fetchall():
-#                 msg_id, user, content, reply, create_at = message
-#                 if reply == None:
-#                     messages.append({
-#                         'msgId': msg_id,
-#                         'user': user,
-#                         'content': content,
-#                         'createAt': create_at
-#                     })
-#                 else:  # reply != None
-#                     if replies.get(reply) == None:
-#                         replies[reply] = []
-#                     replies[reply].append({
-#                         'msgId': msg_id,
-#                         'user': user,
-#                         'content': content,
-#                         'createAt': create_at
-#                     })
-#             return {"messages": messages, 'replies': replies}
-#         else:  # message_id != None
-#             pass
-#     except Exception as e:
-#         return {"error": e.msg}, 302
-#     finally:
-#         cur.close()
-#         conn.close()
+@app.route('/api/message', methods=['GET'])
+def get_message():
+    channel = request.args.get("channel")
+    token = request.args.get("token")
+    if channel == None or token == None:
+        return {}, 302
+    user = get_user_by_token(token, channel)
+    if user == None:
+        return {}, 302
 
-# @app.route('/api/message/post', methods=['POST'])
-# def post_message():
-#     pass
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = """
+    SELECT user, content, reply, time FROM message WHERE channel = %s
+    """
+
+    try:
+        cur.execute(query, (channel, ))
+        messages = []
+        replies = {}
+        for message in cur.fetchall():
+            user, content, reply, time = message
+            if reply == 0:
+                messages.append({
+                    'user': user,
+                    'content': content,
+                    'time': time
+                })
+            else:  # reply != 0
+                if replies.get(reply) == None:
+                    replies[reply] = []
+                replies[reply].append({
+                    'user': user,
+                    'content': content,
+                    'time': time
+                })
+        return {"messages": messages, 'replies': replies}
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()
 
 
 # @app.route('/api/message/reply', methods=['POST'])

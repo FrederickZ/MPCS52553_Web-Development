@@ -14,9 +14,6 @@ button {
     margin: 0;
     padding: auto;
 }
-input {
-    height: 100%;
-}
 
 
 #panel {
@@ -96,6 +93,9 @@ input {
     height: 40px;
     position: absolute;
     bottom: 0px;
+}
+#new-message input {
+    height: 100%;
 }
 #new-message-content {
     height: 40px;
