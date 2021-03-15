@@ -12,9 +12,12 @@ button {
     border: none;
     height: 40px;
     margin: 0;
-    padding: auto;
+    padding: 0;
 }
-
+.div-button {
+    margin: 0;
+    text-align: left;
+}
 
 #panel {
     position: absolute;
@@ -26,25 +29,40 @@ button {
 }
 
 #navbar {
-    background-color: rgb(51, 55, 71);
+    background-color: rgb(41, 45, 62);
     color: white;
 }
 #logo {
-    height: 80px;
+    height: 60px;
     display: grid;
     grid-template-columns: 120px 80px;
     align-items: baseline;
 }
+#logo h1 {
+    margin: auto 0;
+}
+#version {
+    margin-left: 10px;
+    font-size: 16px;
+    font-weight: normal;
+}
 
+#nav {
+    background-color: rgb(41, 45, 62);
+}
 #session-tabs-bar {
     height: fit-content;
 }
 .session-tab {
     height: 40px;
     width: 100%;
-    background-color: rgb(41, 45, 62);
+    background-color: rgb(51, 55, 71);
     color: white;
     font-size: 18px;
+}
+#back-home {
+    background-color: rgb(51, 55, 71);
+    color: white;
 }
 #back-home {
     height: 40px;
@@ -56,6 +74,10 @@ button {
     bottom: 0;
     display: grid;
     grid-template-columns: 120px 40px 40px;
+}
+#profile p {
+    margin: auto 0;
+    font-size: 20px;
 }
 #profile button {
     width: 40px;

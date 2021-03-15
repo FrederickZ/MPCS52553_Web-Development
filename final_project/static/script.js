@@ -135,9 +135,9 @@ class Channel extends React.Component {
 function ChannelBlock(props) {
     let id = 'ch-' + props.name;
     return (
-        <div id={id} onClick={props.onClickChannelBlock}>
+        <button id={id} onClick={props.onClickChannelBlock}>
             {props.name}
-        </div>
+        </button>
     )
 }
 
@@ -259,9 +259,9 @@ class SessionTab extends React.Component {
     render() {
         let id = 'se-' + this.props.sessionChannel;
         return (
-            <div id={id} className="session-tab" onClick={this.props.onClickSessionTab}>
+            <button id={id} className="session-tab div-button" onClick={this.props.onClickSessionTab}>
                 {this.props.sessionChannel}
-            </div>
+            </button>
         );
     }
 }
@@ -485,8 +485,8 @@ class Panel extends React.Component {
             <div id="panel">
                 <div id= "navbar">
                     <div id="logo">
-                        <h1>BELAY</h1>
-                        <small>1.0.0</small>
+                        <h1>BELAY<span id="version">1.0.0</span></h1>
+                        
                     </div>
                     {this.props.username && 
                         <Nav
