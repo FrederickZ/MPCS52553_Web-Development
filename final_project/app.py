@@ -288,8 +288,9 @@ def get_user_by_token(token, channel):
 @app.route('/api/message/new', methods=['POST'])
 def post_message():
     channel = request.args.get("channel")
+    token = request.args.get("token")
     body = request.get_json()
-    token, user, content = tuple(body.values());
+    user, content = tuple(body.values());
     token_user = get_user_by_token(token, channel)
     if token_user == None or token_user != user:
         return {}, 302
@@ -323,7 +324,7 @@ def get_message():
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
     query = """
-    SELECT user, content, reply, time FROM message WHERE channel = %s
+    SELECT id, user, content, reply, time FROM message WHERE channel = %s
     """
 
     try:
@@ -331,9 +332,10 @@ def get_message():
         messages = []
         replies = {}
         for message in cur.fetchall():
-            user, content, reply, time = message
+            id, user, content, reply, time = message
             if reply == 0:
                 messages.append({
+                    'id': id,
                     'user': user,
                     'content': content,
                     'time': time
@@ -342,6 +344,7 @@ def get_message():
                 if replies.get(reply) == None:
                     replies[reply] = []
                 replies[reply].append({
+                    'id': id,
                     'user': user,
                     'content': content,
                     'time': time

@@ -2,15 +2,21 @@
                             Channel         
 ------------------------------------------------------------ */
 
-class Message extends React.Component {
+class MessageBlock extends React.Component {
     constructor(props) {
         super(props);
     }
 
     render() {
+        let id = 'm-' + this.props.message.id;
         return (
-            <div className="message">
-                message
+            <div id={id} className="message-block">
+                <div className="message-body">
+                    {this.props.message.content}
+                </div>
+                <div className="message-footer">
+                    <p>{this.props.message.user}<span>{this.props.message.time}</span></p>
+                </div>
             </div>
         );
     }
@@ -33,7 +39,8 @@ class MessagesBox extends React.Component {
     }
 
     componentWillUnmount() {
-        this.poller = null
+        clearInterval(this.poller);
+        this.poller = null;
     }
 
     getMessages() {
@@ -60,9 +67,16 @@ class MessagesBox extends React.Component {
     }
 
     render() {
+        const messageBlocks = this.state.messages.map(item => 
+            <MessageBlock 
+                key={item.id}
+                message={item}
+                replies={this.state.replies[item.id]}
+            />
+        )
         return (
             <div id="messages-box">
-                messages box
+                { messageBlocks }
             </div>
         )
     }
@@ -82,19 +96,18 @@ class Channel extends React.Component {
     }
 
     onSendMessage() {
-        console.log(this.props.channel)
-        fetch(`/api/message/new?channel=${this.props.channel}`, {
+        fetch(`/api/message/new?channel=${this.props.channel}&&token=${window.sessionStorage.token}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                token: window.sessionStorage.token,
                 user: this.props.username,
                 content: this.newMessage
             })
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
-                    return;
+                    document.getElementById('new-message-content').clear()
+                    this.newMessage = '';
                 });
             } else {
                 response.json().then((data) => {
@@ -109,6 +122,9 @@ class Channel extends React.Component {
     render() {
         return (
             <div id="channel">
+                <div id="channel-name">
+                    <h1>{this.props.channel}</h1>
+                </div>
                 <MessagesBox 
                     channel={this.props.channel}
                 />
