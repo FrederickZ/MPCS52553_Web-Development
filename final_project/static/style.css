@@ -27,8 +27,6 @@ button {
 .popup {
     position: fixed;
     z-index: 1;
-    width: 100vw;
-    height: 100vh;
     background-color: rgba(0,0,0,0.25);
 }
 .popup-box {
@@ -40,7 +38,14 @@ button {
     background-color: rgb(51, 55, 71)
 }
 
+
+
+/* register */
 #register {
+    width: 100vw;
+    height: 100vh;
+}
+#register .popup-box {
     max-width: 360px;
     margin: 200px auto;
     padding: 45px;
@@ -214,7 +219,7 @@ button {
     background-color: rgb(41, 45, 62);
     width: 100%;
     height: 40px;
-    bottom: 0px;
+    bottom: 0;
     display: grid;
     grid-template-columns: auto 40px;
 }
@@ -235,6 +240,42 @@ button {
     width: 40px;
     height: 40px;
     background: none;
+    color: white;
+}
+
+
+/* thread */
+
+#thread {
+    height: 100vh;
+    left: 200px;
+    width: 100vw;
+    display: grid;
+    grid-template-columns: auto 480px;
+}
+#thread .popup-blank-area {
+    width: 100%;
+}
+#thread .popup-box {
+    max-width: 480px;
+    height: 100vh;
+    top: 80px;
+    right: 200px;
+}
+
+#thread input {
+    outline: 0;
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    margin: 0 0 15px;
+    padding: 15px;
+}
+#thread button {
+    width: 100%;
+    border: 0;
+    margin: 0 0 15px;
+    padding: 15px;
     color: white;
 }
 

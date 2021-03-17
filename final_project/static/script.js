@@ -71,8 +71,9 @@ class Thread extends React.Component {
 
     render() {
         return (
-            <div className="popup">
-                <div id="thread" className="popup-box">
+            <div id="thread" className="popup">
+                <div className="popup-blank-area"></div>
+                <div className="popup-box">
                     <div id="thread-header">
                         <p>{this.props.message.user}<span>{this.props.message.time}</span></p>
                         {this.props.message.content}
@@ -766,8 +767,8 @@ class Register extends React.Component {
             // update
         }
         return (
-            <div className="popup">
-                <div id="register" className="popup-box">{ register }</div>
+            <div id="register" className="popup">
+                <div className="popup-box">{ register }</div>
             </div>
         );
     }
