@@ -266,7 +266,7 @@ def update_session():
         cur.close()
         conn.close()
 
-def get_user_by_token(token, channel):
+def get_user_by_channel(token, channel):
     conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
     cur = conn.cursor()
     query = """
@@ -286,12 +286,12 @@ def get_user_by_token(token, channel):
         conn.close()
 
 @app.route('/api/message/new', methods=['POST'])
-def post_message():
+def new_message():
     channel = request.args.get("channel")
     token = request.args.get("token")
     body = request.get_json()
     user, content = tuple(body.values());
-    token_user = get_user_by_token(token, channel)
+    token_user = get_user_by_channel(token, channel)
     if token_user == None or token_user != user:
         return {}, 302
 
@@ -311,13 +311,40 @@ def post_message():
         cur.close()
         conn.close()
 
+@app.route('/api/message/reply', methods=['POST'])
+def reply_message():
+    channel = request.args.get("channel")
+    message = request.args.get("message")
+    token = request.args.get("token")
+    body = request.get_json()
+    user, content = tuple(body.values());
+    token_user = get_user_by_channel(token, channel)
+    if token_user == None or token_user != user:
+        return {}, 302
+
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = """
+    INSERT INTO message (channel, user, content, reply) VALUES (%s, %s, %s, %s)
+    """
+    try:
+        cur.execute(query, (channel, user, content, message))
+        conn.commit()
+        return {}
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()
+
 @app.route('/api/message', methods=['GET'])
 def get_message():
     channel = request.args.get("channel")
     token = request.args.get("token")
     if channel == None or token == None:
         return {}, 302
-    user = get_user_by_token(token, channel)
+    user = get_user_by_channel(token, channel)
     if user == None:
         return {}, 302
 
@@ -349,6 +376,7 @@ def get_message():
                     'content': content,
                     'time': time
                 })
+        print({"messages": messages, 'replies': replies})
         return {"messages": messages, 'replies': replies}
     except Exception as e:
         print(e)
@@ -357,7 +385,75 @@ def get_message():
         cur.close()
         conn.close()
 
+def get_user_by_token(token):
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = """
+    SELECT user FROM session WHERE token = %s
+    """
+    try:
+        cur.execute(query, (token, ))
+        result = cur.fetchone()
+        if (result):
+            return result[0]
+        else:
+            return None
+    except Exception as e:
+        print(e)
+        return None
+    finally:
+        cur.close()
+        conn.close()
 
-# @app.route('/api/message/reply', methods=['POST'])
-# def reply_message():
-#     pass
+@app.route('/api/message/unreads', methods=['GET'])
+def get_unread_message():
+    user = request.args.get("user")
+    token = request.args.get("token")
+    if user == None or token == None:
+        return {}, 302
+    user = get_user_by_token(token)
+    if user == None:
+        return {}, 302
+
+    conn = mysql.connector.connect(user=DB_USERNAME, database=DB_NAME, password=DB_PASSWORD)
+    cur = conn.cursor()
+    query = """
+    SELECT id, m.channel, content, reply, time FROM message AS m
+    JOIN session AS s ON (m.channel = s.channel AND m.user = s.user) 
+    WHERE (m.user = %s AND m.time >= s.last_active)
+    """
+
+    try:
+        cur.execute(query, (user, ))
+        unreads = {}
+        for message in cur.fetchall():
+            id, channel, content, reply, time = message
+            if unreads.get(channel) == None:
+                unreads[channel] = {
+                    'messages': [],
+                    'replies': {}
+                }
+            if reply == 0:
+                unreads[channel]['messages'].append({
+                    'id': id,
+                    'user': user,
+                    'content': content,
+                    'time': time
+                })
+            else:  # reply != 0
+                if unreads[channel]['replies'].get(reply) == None:
+                    unreads[channel]['replies'][reply] = []
+                unreads[channel]['replies'][reply].append({
+                    'id': id,
+                    'user': user,
+                    'content': content,
+                    'time': time
+                })
+        print(unreads)
+        return {"unreads": unreads}
+    except Exception as e:
+        print(e)
+        return {}, 302
+    finally:
+        cur.close()
+        conn.close()

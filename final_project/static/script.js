@@ -1,25 +1,117 @@
 /* ------------------------------------------------------------
-                            Channel         
+                            Thread         
 ------------------------------------------------------------ */
 
-class MessageBlock extends React.Component {
+function ReplyBlock(props) {    
+    let id = 'r-' + props.reply.id;
+    return (
+        <div id={id} className="reply-block">
+            <div className="reply-body">
+                {props.reply.content}
+            </div>
+            <div className="reply-footer">
+                <p>{props.reply.user}<span>{props.reply.time}</span></p>
+            </div>
+        </div>
+    )
+}
+
+
+
+class RepliesBox extends React.Component {
     constructor(props) {
-        super(props);
+        super(props)
+    }
+    
+    render() {
+        return null;
+    }
+}
+
+
+
+class Thread extends React.Component {
+    constructor(props) {
+        super(props)
+
+        this.newReply = ''
+        this.onInputChange = this.onInputChange.bind(this)
+    }
+
+    onInputChange(e) {
+        this.newReply = e.target.value;
+    }
+
+    onSendReply() {
+        let channel = this.props.channel
+        let message = this.props.threadMessage
+        let token = window.sessionStorage.token
+        fetch(`/api/message/reply?channel=${channel}&message=${message}&token=${token}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                user: this.props.username,
+                content: this.newMessage
+            })
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    document.getElementById('new-reply-content').value = ''
+                    this.newReply = '';
+                });
+            } else {
+                response.json().then((data) => {
+                    alert(data.error);
+                })
+            }
+        }).catch((response) =>{
+            console.log(response);
+        })
     }
 
     render() {
-        let id = 'm-' + this.props.message.id;
         return (
-            <div id={id} className="message-block">
-                <div className="message-body">
-                    {this.props.message.content}
-                </div>
-                <div className="message-footer">
-                    <p>{this.props.message.user}<span>{this.props.message.time}</span></p>
+            <div className="popup">
+                <div id="thread" className="popup-box">
+                    <div id="thread-header">
+                        <p>{props.message.user}<span>{props.message.time}</span></p>
+                        {props.message.content}
+                    </div>
+                    <RepliesBox />
+                    <div id="new-reply">
+                        <input 
+                            type="text" id="new-reply-content" name="new-reply-content" onChange={this.onInputChange}
+                        />
+                        <button id="new-message-button" onClick={this.onSendReply}>Send</button>
+                    </div>
                 </div>
             </div>
-        );
+            
+        )
     }
+}
+
+
+
+
+/* ------------------------------------------------------------
+                            Channel         
+------------------------------------------------------------ */
+
+function MessageBlock(props) { 
+    let id = 'm-' + props.message.id;
+    return (
+        <div id={id} className="message-block">
+            <div className="message-footer">
+                <p>{props.message.user}<span>{props.message.time}</span></p>
+            </div>
+            <div className="message-body">
+                <button onClick={props.onClickReply}><i className="material-icons">forum</i></button>
+                {props.message.content}
+            </div>
+            
+        </div>
+    );
 }
 
 class MessagesBox extends React.Component {
@@ -35,6 +127,7 @@ class MessagesBox extends React.Component {
     }
 
     componentDidMount() {
+        this.getMessages();
         this.poller = setInterval(()=> this.getMessages(), 1000);
     }
 
@@ -72,6 +165,7 @@ class MessagesBox extends React.Component {
                 key={item.id}
                 message={item}
                 replies={this.state.replies[item.id]}
+                onClickReply={this.props.handleEnterThread}
             />
         )
         return (
@@ -85,10 +179,14 @@ class MessagesBox extends React.Component {
 class Channel extends React.Component {
     constructor(props) {
         super(props)
+        this.state = {
+            threadMessage: 0
+        }
 
         this.newMessage = '';
         this.onInputChange = this.onInputChange.bind(this)
         this.onSendMessage = this.onSendMessage.bind(this)
+        this.handleEnterThread = this.handleEnterThread.bind(this)
     }
 
     onInputChange(e) {
@@ -96,7 +194,7 @@ class Channel extends React.Component {
     }
 
     onSendMessage() {
-        fetch(`/api/message/new?channel=${this.props.channel}&&token=${window.sessionStorage.token}`, {
+        fetch(`/api/message/new?channel=${this.props.channel}&token=${window.sessionStorage.token}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -106,7 +204,7 @@ class Channel extends React.Component {
         }).then((response) => {
             if (response.status == 200) {
                 response.json().then((data) => {
-                    document.getElementById('new-message-content').clear()
+                    document.getElementById('new-message-content').value = ''
                     this.newMessage = '';
                 });
             } else {
@@ -119,20 +217,33 @@ class Channel extends React.Component {
         })
     }
 
+    handleEnterThread(e) {
+        this.setState({thread: e.target.id})
+    }
+
     render() {
         return (
             <div id="channel">
-                <div id="channel-name">
+                {this.state.threadMessage != 0 && 
+                    <Thread 
+                        message={this.state.threadMessage}
+                    />
+                }
+                <div id="channel-header">
+                    <div id="channel-info"></div>
                     <h1>{this.props.channel}</h1>
                 </div>
                 <MessagesBox 
                     channel={this.props.channel}
+                    handleEnterThread={this.handleEnterThread}
                 />
                 <div id="new-message">
                     <input 
                         type="text" name="new-message-content" onChange={this.onInputChange}
                     />
-                    <button id="new-message-button" onClick={this.onSendMessage}>Send</button>
+                    <button onClick={this.onSendMessage}>
+                        <i className="material-icons">send</i>
+                    </button>
                 </div>
             </div>
         )
@@ -204,18 +315,20 @@ class Home extends React.Component {
     render() {
         return (
             <div id="home">
-                <p>search bar</p>
+                <div id="home-header">
+                    <input 
+                        type="text" name="new-channel-name" placeholder="search or create ..." 
+                        onChange={this.props.onInputChange}
+                    />
+                    <button id="create-channel-button" onClick={this.props.onCreateChannel}>
+                        <i className="material-icons">add</i>
+                    </button>
+                </div>
                 <ChannelBlocksBar 
                     allChannels={this.state.allChannels}
                     handleClickChannelBlock={this.props.handleCreateSession}
                 />
-                <div id="create-channel">
-                    <input 
-                        type="text" name="new-channel-name" placeholder="1-40 characters; a-z 0-9 only; separator: _" 
-                        onChange={this.props.onInputChange}
-                    />
-                    <button id="create-channel-button" onClick={this.props.onCreateChannel}>Create Channel</button>
-                </div>
+                
             </div>
         )
     }
@@ -267,17 +380,17 @@ class SessionTab extends React.Component {
         super(props);
     }
 
-    componentDidMount() {
-        // polling new message number
-        return;
-    }
-
     render() {
         let id = 'se-' + this.props.sessionChannel;
+        let sessionButtonText = this.props.sessionChannel
+        if (this.props.hasUnreads) {
+            sessionButtonText = "! " + sessionButtonText
+        }
         return (
-            <button id={id} className="session-tab div-button" onClick={this.props.onClickSessionTab}>
-                {this.props.sessionChannel}
-            </button>
+                <button id={id} className="session-tab div-button" onClick={this.props.onClickSessionTab}>
+                    {sessionButtonText}
+                </button>
+            
         );
     }
 }
@@ -292,6 +405,7 @@ class SessionTabsBar extends React.Component {
             <SessionTab 
                 key={this.props.userSessions[item].token}
                 sessionChannel={item}
+                hasUnreads={this.props.unreads[item] ? true : false}
                 onClickSessionTab={this.props.handleClickSessionTab}
             />
         );
@@ -307,7 +421,7 @@ class SessionTabsBar extends React.Component {
 function Profile(props) {
     return (
         <div id="profile">
-            <p>Hi, {window.localStorage.username}</p>
+            <p>{window.localStorage.username}</p>
             <button variant="light"><i className="material-icons">settings</i></button>
             <button variant="light" onClick={props.onClickLogout}><i className="material-icons">logout</i></button>
         </div>
@@ -329,6 +443,7 @@ class Nav extends React.Component {
                 <SessionTabsBar 
                     userSessions={this.props.userSessions}
                     handleClickSessionTab={this.props.handleSwitchSession}
+                    unreads={this.props.unreads}
                 />
                 <button id="back-home" variant="light" onClick={this.props.onClickBackHome}>
                     <i className="material-icons">add</i>
@@ -354,7 +469,10 @@ class Panel extends React.Component {
         this.state = {
             sessionChannel: '',
             userSessions: {},
+            unreads: {}
         }
+
+        this.getUnreads = this.getUnreads.bind(this);
 
         this.getUserSessions = this.getUserSessions.bind(this);
         this.handleSwitchSession = this.handleSwitchSession.bind(this);
@@ -367,6 +485,38 @@ class Panel extends React.Component {
 
         this.handleCreateSession = this.handleCreateSession.bind(this);
         this.handleUpdateSessionTimestamp = this.handleUpdateSessionTimestamp.bind(this);
+    }
+
+    componentDidMount() {
+        this.poller = setInterval(()=> this.getUnreads(), 1000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.poller);
+        this.poller = null;
+    }
+
+    getUnreads() {
+        if (!this.props.username || !this.state.userSessions) {
+            return;
+        }
+        let token = this.state.userSessions[Object.keys(this.state.userSessions)[0]].token
+        fetch(`/api/message/unreads?user=${this.props.username}&token=${token}`, {
+            method: "GET",
+            headers: {'Content-Type': 'application/json'},
+        }).then((response) => {
+            if (response.status == 200) {
+                response.json().then((data) => {
+                    this.setState({
+                        unreads: data.unreads
+                    })
+                })
+            } else {
+                console.log(response.status);
+            }
+        }).catch((response) => {
+            console.log(response);
+        })
     }
 
     handleBackHome() {
@@ -386,7 +536,7 @@ class Panel extends React.Component {
         const userSessions = JSON.parse(JSON.stringify(this.state.userSessions));
         let channelName = this.newChannelName;
         if (!channelName || !/^[a-z0-9]+(_[a-z0-9]+)*$/.test(channelName)) {
-            alert(`Invalid channel name: ${channelName}`);
+            alert(`Invalid channel name: ${channelName}\n1-40 characters; a-z 0-9 only; separator: _`);
             return;
         }
 
@@ -501,13 +651,14 @@ class Panel extends React.Component {
             <div id="panel">
                 <div id= "navbar">
                     <div id="logo">
-                        <h1>BELAY<span id="version">1.0.0</span></h1>
-                        
+                        <h1>BELAY</h1>
+                        <p>1.0.0</p>
                     </div>
                     {this.props.username && 
                         <Nav
                             username={this.props.username}
                             sessionChannel={this.state.sessionChannel}
+                            unreads={this.state.unreads}
                             
                             getUserSessions={this.getUserSessions}
                             userSessions={this.state.userSessions}
@@ -541,26 +692,24 @@ class Panel extends React.Component {
 
 function Login(props) {
     return (
-        <div id="login">
-            <h3>LOG IN</h3>
+        <div id="login" className="register-box">
             <input type="text" name="email" placeholder="Email" onChange={props.onInputChange}/><br/>
             <input 
                 type="password" name="password" placeholder="Password" 
                 onChange={props.onInputChange}
             /><br/>
             <button id="login-button" onClick={props.onLogin}>Log in</button><br/>
-            <small>
-                Don't have an account? 
-                <button onClick={props.onSwitchToSignup}>SIGN UP</button>
-            </small>
+            
+            <div className="switch-register">
+                <p>Don't have an account? <a href="#" onClick={props.onSwitchToSignup}>Sign up</a></p>
+            </div>
         </div>
     );
 }
 
 function Signup(props) {
     return (
-        <div id="signup">
-            <h3>CREATE AN ACCOUNT</h3>
+        <div id="signup" className="register-box">
             <input type="text" name="email" placeholder="Email" onChange={props.onInputChange}/><br/>
             <input 
                 type="text" name="username" placeholder="Username (1-20 characters)" maxLength="20"
@@ -571,10 +720,9 @@ function Signup(props) {
                 onChange={props.onInputChange}
             /><br/>
             <button id="signup-button" onClick={props.onSignup}>Sign up</button><br/>
-            <small>
-                Already have an account? 
-                <button onClick={props.onSwitchToLogin}>LOG IN</button>
-            </small>
+            <div className="switch-register">
+                <p>Already have an account? <a href="#" onClick={props.onSwitchToLogin}>Log in</a></p>
+            </div>
         </div>
     );
 }
@@ -620,8 +768,8 @@ class Register extends React.Component {
             // update
         }
         return (
-            <div id="register" className="popup">
-                <div id="register-box" className="popup-box">{ register }</div>
+            <div className="popup">
+                <div id="register" className="popup-box">{ register }</div>
             </div>
         );
     }

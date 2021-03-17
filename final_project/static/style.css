@@ -1,22 +1,14 @@
-html {
-    font-family: sans-serif;
-}
 body {
     margin: 0;
+    overflow: hidden;
 }
-
-div {
-    height: 100%
+input {
+    font-size: 14px;
 }
 button {
+    background-color: rgb(204, 200, 184);
+    font-size: 14px;
     border: none;
-    height: 40px;
-    margin: 0;
-    padding: 0;
-}
-.div-button {
-    margin: 0;
-    text-align: left;
 }
 
 #panel {
@@ -28,55 +20,112 @@ button {
     grid-template-columns: 200px auto;
 }
 
-#navbar {
-    background-color: rgb(41, 45, 62);
+
+
+/* popup-box register, thread */
+
+.popup {
+    position: fixed;
+    z-index: 1;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.25);
+}
+.popup-box {
+    position: relative;
+    z-index: 1;
+    background-color: rgb(214, 210, 193);
+}
+.popup-box button {
+    background-color: rgb(51, 55, 71)
+}
+
+#register {
+    max-width: 360px;
+    margin: 200px auto;
+    padding: 45px;
+    text-align: center;
+}
+#register input {
+    outline: 0;
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    margin: 0 0 15px;
+    padding: 15px;
+}
+#register button {
+    width: 100%;
+    border: 0;
+    margin: 0 0 15px;
+    padding: 15px;
     color: white;
 }
+
+
+
+/* nav */
+
+#navbar {
+    background-color: rgb(41, 45, 62);
+    height: 100vh;
+    width: 200px;
+}
+
 #logo {
-    height: 60px;
-    display: grid;
-    grid-template-columns: 120px 80px;
-    align-items: baseline;
+    height: 80px;
+    width: 200px;
+    display: flex;
+    color: white;
 }
 #logo h1 {
-    margin: auto 0;
-}
-#version {
+    display: block;
+    width: 120px;
     margin-left: 10px;
-    font-size: 16px;
-    font-weight: normal;
+    margin-top: 20px;
+}
+#logo p {
+    display: block;
+    width: 80px;
+    margin-left: 10px;
+    margin-top: 36px;
 }
 
 #nav {
-    background-color: rgb(41, 45, 62);
+    display: grid;
+    grid-template-rows: auto 40px 40px;
 }
-#session-tabs-bar {
-    height: fit-content;
-}
-.session-tab {
+#nav button {
     height: 40px;
     width: 100%;
-    background-color: rgb(51, 55, 71);
+    background-color: rgb(204, 200, 184);
+    text-align: left;
+}
+#nav button:hover{
+    background-color:rgb(51, 55, 71);
     color: white;
-    font-size: 18px;
 }
-#back-home {
-    background-color: rgb(51, 55, 71);
-    color: white;
+#nav #back-home {
+    text-align: center;
 }
-#back-home {
-    height: 40px;
-    width: 100%;
+#nav .material-icons {
+    width: 24px;
+    position: relative;
+    right: 0px;
 }
+
 #profile {
     height: 40px;
+    margin: auto;
     position: absolute;
+    color: white;
     bottom: 0;
     display: grid;
     grid-template-columns: 120px 40px 40px;
 }
 #profile p {
-    margin: auto 0;
+    margin-top: 8px;
+    margin-left: 10px;
     font-size: 20px;
 }
 #profile button {
@@ -86,23 +135,34 @@ button {
     color: white
 }
 
-#create-channel-div {
-    position: absolute;
-    bottom: 0;
-    height: 60px;
-    display: grid;
-    grid-template-columns: auto 100px;
-}
-#new-channel-input {
-    height: 56px;
+
+
+/* home */
+
+#home-header {
+    background-color: rgb(41, 45, 62);
     width: 100%;
-    border: none;
+    height: 80px;
+    display: grid;
+    grid-template-columns: auto 80px;
 }
-#create-channel-btn {
-    height: 60px;
-    width: 100px;
+#home-header input {
+    outline: 0;
+    width: 100%;
+    background: none;
+    color: white;
     border: none;
+    padding: 15px;
+    font-size: 28px;
+    box-sizing: border-box;
 }
+#home-header button {
+    width: 80px;
+    height: 80px;
+    background: none;
+    color: white;
+}
+
 #channels-list {
     width: 100%
 }
@@ -111,38 +171,59 @@ button {
     width: 100%;
     background-color: rgb(204, 200, 184);
 }
+
+
+
+/* channel */
+#channel {
+    height: 100vh;
+}
+
+#channel-header {
+    background-color: rgb(41, 45, 62);
+    width: 100%;
+    height: 80px;
+    display: grid;
+    grid-template-columns: 320px auto;
+}
+#channel-header h1 {
+    margin: auto 15px;
+    text-align: right;
+    font-weight: normal;
+    color: white;
+    box-sizing: border-box;
+}
+
+
+
 #new-message {
-    height: 40px;
+    background-color: rgb(41, 45, 62);
     position: absolute;
+    height: 40px;
     bottom: 0px;
+    display: grid;
+    grid-template-columns: auto 40px;
 }
 #new-message input {
-    height: 100%;
-}
-#new-message-content {
-    height: 40px;
-}
-
-
-
-/* register */
-.popup {
-    display: block;
-    position: fixed;
-    z-index: 1;
+    outline: 0;
     width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.25);
+    background: none;
+    color: white;
+    border: none;
+    padding: auto 15px;
+    font-size: 14px;
+    box-sizing: border-box;
 }
-.popup-box {
-    position: absolute;
-    z-index: 1;
-    top: 30%;
-    left: 30%;
-    width: 40%;
-    height: 40%;
-    padding: 20px;
-    background-color: white;
-    border-radius: 5px;
-    border: 2px solid black;
+#new-message button {
+    width: 40px;
+    height: 40px;
+    background: none;
+    color: white;
 }
+
+
+
+
+
+
+
