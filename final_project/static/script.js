@@ -74,8 +74,8 @@ class Thread extends React.Component {
             <div className="popup">
                 <div id="thread" className="popup-box">
                     <div id="thread-header">
-                        <p>{props.message.user}<span>{props.message.time}</span></p>
-                        {props.message.content}
+                        <p>{this.props.message.user}<span>{this.props.message.time}</span></p>
+                        {this.props.message.content}
                     </div>
                     <RepliesBox />
                     <div id="new-reply">
@@ -99,17 +99,14 @@ class Thread extends React.Component {
 ------------------------------------------------------------ */
 
 function MessageBlock(props) { 
-    let id = 'm-' + props.message.id;
     return (
-        <div id={id} className="message-block">
-            <div className="message-footer">
-                <p>{props.message.user}<span>{props.message.time}</span></p>
+        <div id={'m-'+props.message.id} className="message-block">
+            <div className="message-header">
+                <p>{props.message.user} <span>{props.message.time}</span></p>
             </div>
             <div className="message-body">
-                <button onClick={props.onClickReply}><i className="material-icons">forum</i></button>
-                {props.message.content}
+                <p><a id={props.message.id} href="#" onClick={props.onClickMessage}>{props.message.content}</a></p>
             </div>
-            
         </div>
     );
 }
@@ -165,7 +162,7 @@ class MessagesBox extends React.Component {
                 key={item.id}
                 message={item}
                 replies={this.state.replies[item.id]}
-                onClickReply={this.props.handleEnterThread}
+                onClickMessage={this.props.handleEnterThread}
             />
         )
         return (
@@ -218,17 +215,13 @@ class Channel extends React.Component {
     }
 
     handleEnterThread(e) {
-        this.setState({thread: e.target.id})
+        this.setState({threadMessage: e.target.id})
     }
 
     render() {
+        console.log(this.state.threadMessage)
         return (
             <div id="channel">
-                {this.state.threadMessage != 0 && 
-                    <Thread 
-                        message={this.state.threadMessage}
-                    />
-                }
                 <div id="channel-header">
                     <div id="channel-info"></div>
                     <h1>{this.props.channel}</h1>
@@ -239,12 +232,17 @@ class Channel extends React.Component {
                 />
                 <div id="new-message">
                     <input 
-                        type="text" name="new-message-content" onChange={this.onInputChange}
+                        type="text" id="new-message-content" name="new-message-content" onChange={this.onInputChange}
                     />
                     <button onClick={this.onSendMessage}>
                         <i className="material-icons">send</i>
                     </button>
                 </div>
+                {this.state.threadMessage != 0 && 
+                    <Thread 
+                        message={this.state.threadMessage}
+                    />
+                }
             </div>
         )
     }
